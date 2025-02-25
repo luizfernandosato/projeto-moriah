@@ -216,34 +216,46 @@ const GerarRecibo = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '')) / 100;
+    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '').replace(',', '.')) / 100;
     const valorExtenso = valorPorExtenso(valorNumerico);
 
     doc.setFont("helvetica");
     doc.setFontSize(16);
 
     if (logoUrl) {
-      doc.addImage(logoUrl, 'JPEG', 15, 15, 50, 20);
+      const img = new Image();
+      img.src = logoUrl;
+      
+      const maxWidth = 100;  // Largura máxima em mm
+      const maxHeight = 30;  // Altura máxima em mm
+      
+      const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+      const width = img.width * ratio;
+      const height = img.height * ratio;
+      
+      const x = (210 - width) / 2; // 210 é a largura da página A4 em mm
+      
+      doc.addImage(logoUrl, 'JPEG', x, 15, width, height);
     }
 
-    doc.text("RECIBO", 105, 40, { align: "center" });
+    doc.text("RECIBO", 105, 60, { align: "center" });
     doc.setFontSize(12);
 
-    doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 60, { align: "center" });
+    doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 80, { align: "center" });
 
     doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
       `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
 
     const linhas = doc.splitTextToSize(texto, 180);
-    doc.text(linhas, 15, 80);
+    doc.text(linhas, 15, 100);
 
-    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 120);
+    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 140);
 
-    doc.line(15, 150, 195, 150);
+    doc.line(15, 170, 195, 170);
 
-    doc.text(`${formData.recebedor}`, 105, 160, { align: "center" });
-    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 166, { align: "center" });
+    doc.text(`${formData.recebedor}`, 105, 180, { align: "center" });
+    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 186, { align: "center" });
 
     return doc;
   };
