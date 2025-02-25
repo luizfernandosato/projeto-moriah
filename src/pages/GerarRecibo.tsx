@@ -116,13 +116,15 @@ const valorPorExtenso = (valor: number): string => {
 
 const formatarNumero = (valor: string) => {
   const numero = valor.replace(/\D/g, '');
-  const partes = [];
   
-  for (let i = numero.length - 1; i >= 0; i -= 3) {
-    partes.unshift(numero.slice(Math.max(0, i - 2), i + 1));
-  }
+  if (numero === '') return '';
   
-  return partes.join('.');
+  const valorNumerico = parseInt(numero) / 100;
+  
+  return valorNumerico.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 };
 
 const GerarRecibo = () => {
@@ -145,11 +147,10 @@ const GerarRecibo = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'valor') {
-      const numeroLimpo = value.replace(/\D/g, '');
-      const valorFormatado = formatarNumero(numeroLimpo);
+      const numeroFormatado = formatarNumero(value);
       setFormData(prev => ({
         ...prev,
-        [name]: valorFormatado
+        [name]: numeroFormatado
       }));
     } else {
       setFormData(prev => ({
@@ -403,7 +404,7 @@ const GerarRecibo = () => {
                   <div className="space-y-2">
                     <Label>Valor por Extenso</Label>
                     <Input
-                      value={formData.valor ? valorPorExtenso(parseFloat(formData.valor.replace(/\./g, '')) / 100) : ""}
+                      value={formData.valor ? valorPorExtenso(parseFloat(formData.valor.replace(/\./g, '').replace(',', '.'))) : ""}
                       readOnly
                       className="bg-gray-50"
                     />
