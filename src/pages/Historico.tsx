@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -36,31 +35,33 @@ const Historico = () => {
     queryFn: async () => {
       let query = supabase
         .from("recibos")
-        .select("*");
+        .select("id, pagador, valor, data, pdf_url")
+        .order('data', { ascending: false });
 
-      // Filtros
-      if (filtros.dataInicio) {
-        query = query.gte('data', filtros.dataInicio);
+      if (filtros.dataInicio || filtros.dataFim || filtros.mes || filtros.ano || filtros.dia) {
+        if (filtros.dataInicio) {
+          query = query.gte('data', filtros.dataInicio);
+        }
+        if (filtros.dataFim) {
+          query = query.lte('data', filtros.dataFim);
+        }
+        if (filtros.mes) {
+          query = query.ilike('data', `%-${filtros.mes}-%`);
+        }
+        if (filtros.ano) {
+          query = query.ilike('data', `${filtros.ano}-%`);
+        }
+        if (filtros.dia) {
+          query = query.ilike('data', `%-${filtros.dia}`);
+        }
       }
-      if (filtros.dataFim) {
-        query = query.lte('data', filtros.dataFim);
-      }
-      if (filtros.mes) {
-        query = query.ilike('data', `%-${filtros.mes}-%`);
-      }
-      if (filtros.ano) {
-        query = query.ilike('data', `${filtros.ano}-%`);
-      }
-      if (filtros.dia) {
-        query = query.ilike('data', `%-${filtros.dia}`);
-      }
-
-      query = query.order('data', { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
       return data as Recibo[];
     },
+    staleTime: 30000,
+    refetchOnWindowFocus: false
   });
 
   const handleSelectAll = () => {
@@ -189,7 +190,6 @@ const Historico = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="dataInicio">Data Início</Label>
@@ -284,7 +284,6 @@ const Historico = () => {
                 </div>
               </div>
 
-              {/* Lista de Recibos */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Button
@@ -305,9 +304,13 @@ const Historico = () => {
                 </div>
 
                 {isLoading ? (
-                  <p>Carregando...</p>
+                  <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
                 ) : recibos?.length === 0 ? (
-                  <p>Nenhum recibo encontrado.</p>
+                  <div className="text-center p-8">
+                    <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4">
                     {recibos?.map((recibo) => (

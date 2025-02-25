@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Download, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
-// Função para converter número em texto por extenso
 const valorPorExtenso = (valor: number): string => {
   if (valor === 0) return "zero";
   
@@ -72,6 +70,7 @@ const valorPorExtenso = (valor: number): string => {
 
 const GerarRecibo = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -97,18 +96,14 @@ const GerarRecibo = () => {
     const valor = parseFloat(formData.valor);
     const valorExtenso = valorPorExtenso(valor);
 
-    // Configurar fonte e tamanho
     doc.setFont("helvetica");
     doc.setFontSize(16);
 
-    // Título
     doc.text("RECIBO", 105, 20, { align: "center" });
     doc.setFontSize(12);
 
-    // Valor em destaque
     doc.text(`R$ ${valor.toFixed(2)}`, 105, 40, { align: "center" });
 
-    // Conteúdo principal
     doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
       `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
@@ -116,13 +111,10 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 60);
 
-    // Local e data
     doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 100);
 
-    // Linha para assinatura
     doc.line(15, 130, 195, 130);
 
-    // Dados do recebedor
     doc.text(`${formData.recebedor}`, 105, 140, { align: "center" });
     doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 146, { align: "center" });
 
@@ -161,15 +153,12 @@ const GerarRecibo = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     try {
-      // Gerar PDF
       const doc = generatePDF();
-      
-      // Converter PDF para Blob
       const pdfBlob = doc.output('blob');
       
-      // Upload do PDF para o Storage
       const fileName = `recibos/${Date.now()}_recibo.pdf`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('recibos')
@@ -179,23 +168,22 @@ const GerarRecibo = () => {
 
       if (uploadError) throw uploadError;
 
-      // Obter URL pública do PDF
       const { data: { publicUrl } } = supabase.storage
         .from('recibos')
         .getPublicUrl(fileName);
 
-      // Salvar recibo no banco
       const saved = await saveRecibo(publicUrl);
       if (!saved) throw new Error("Erro ao salvar recibo");
 
       setPdfUrl(publicUrl);
       toast.success("Recibo gerado com sucesso!");
       
-      // Abrir o PDF em uma nova janela
       window.open(publicUrl, '_blank');
     } catch (error) {
       console.error(error);
       toast.error("Erro ao gerar recibo");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -249,9 +237,7 @@ const GerarRecibo = () => {
           </CardHeader>
           
           <form onSubmit={handleSubmit}>
-            {/* Dados do Pagador */}
             <CardContent className="space-y-6">
-              {/* Dados do Pagador */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Dados do Pagador</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,7 +264,6 @@ const GerarRecibo = () => {
                 </div>
               </div>
 
-              {/* Dados do Recibo */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Dados do Recibo</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -340,7 +325,6 @@ const GerarRecibo = () => {
                 </div>
               </div>
 
-              {/* Dados do Recebedor */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Dados do Recebedor</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -373,11 +357,22 @@ const GerarRecibo = () => {
                 type="button" 
                 variant="outline"
                 onClick={() => navigate("/")}
+                disabled={isLoading}
               >
                 Cancelar
               </Button>
-              <Button type="submit">
-                Gerar Recibo
+              <Button 
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Gerando...
+                  </>
+                ) : (
+                  'Gerar Recibo'
+                )}
               </Button>
             </CardFooter>
           </form>
