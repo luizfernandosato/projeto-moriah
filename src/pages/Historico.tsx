@@ -2,15 +2,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Download, Printer, CheckSquare, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
+import { ListaRecibos } from "@/components/historico/ListaRecibos";
+import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
 
 interface Recibo {
   id: string;
@@ -20,19 +17,6 @@ interface Recibo {
   pdf_url: string;
   numero_recibo: number;
 }
-
-const formatarMoeda = (valor: number) => {
-  return valor.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatarNumeroRecibo = (numero: number) => {
-  return numero.toString().padStart(6, '0');
-};
 
 const Historico = () => {
   const [filtros, setFiltros] = useState({
@@ -130,16 +114,7 @@ const Historico = () => {
       .map(r => r.pdf_url);
 
     for (const url of selectedPdfs || []) {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `recibo-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(downloadUrl);
+      await handleDownload(url);
     }
   };
 
@@ -156,31 +131,6 @@ const Historico = () => {
     window.URL.revokeObjectURL(downloadUrl);
   };
 
-  const meses = [
-    { value: "01", label: "Janeiro" },
-    { value: "02", label: "Fevereiro" },
-    { value: "03", label: "Março" },
-    { value: "04", label: "Abril" },
-    { value: "05", label: "Maio" },
-    { value: "06", label: "Junho" },
-    { value: "07", label: "Julho" },
-    { value: "08", label: "Agosto" },
-    { value: "09", label: "Setembro" },
-    { value: "10", label: "Outubro" },
-    { value: "11", label: "Novembro" },
-    { value: "12", label: "Dezembro" },
-  ];
-
-  const dias = Array.from({ length: 31 }, (_, i) => {
-    const dia = (i + 1).toString().padStart(2, "0");
-    return { value: dia, label: dia };
-  });
-
-  const anos = Array.from({ length: 10 }, (_, i) => {
-    const ano = (new Date().getFullYear() - i).toString();
-    return { value: ano, label: ano };
-  });
-
   return (
     <MainLayout>
       <div className="container mx-auto py-8">
@@ -188,143 +138,24 @@ const Historico = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Histórico de Recibos</h2>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handlePrintSelected}
-                  disabled={selectedRecibos.length === 0}
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Imprimir Selecionados
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleDownloadSelected}
-                  disabled={selectedRecibos.length === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar Selecionados
-                </Button>
-              </div>
+              <AcoesRecibos
+                totalRecibos={recibos?.length || 0}
+                selectedCount={selectedRecibos.length}
+                allSelected={recibos ? selectedRecibos.length === recibos.length : false}
+                onSelectAll={handleSelectAll}
+                onPrintSelected={handlePrintSelected}
+                onDownloadSelected={handleDownloadSelected}
+              />
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dataInicio">Data Início</Label>
-                  <Input
-                    id="dataInicio"
-                    type="date"
-                    value={filtros.dataInicio}
-                    onChange={(e) =>
-                      setFiltros((prev) => ({
-                        ...prev,
-                        dataInicio: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dataFim">Data Fim</Label>
-                  <Input
-                    id="dataFim"
-                    type="date"
-                    value={filtros.dataFim}
-                    onChange={(e) =>
-                      setFiltros((prev) => ({
-                        ...prev,
-                        dataFim: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Dia</Label>
-                  <Select
-                    value={filtros.dia}
-                    onValueChange={(dia) =>
-                      setFiltros((prev) => ({ ...prev, dia }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um dia" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
-                      {dias.map((dia) => (
-                        <SelectItem key={dia.value} value={dia.value}>
-                          {dia.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Mês</Label>
-                  <Select
-                    value={filtros.mes}
-                    onValueChange={(mes) =>
-                      setFiltros((prev) => ({ ...prev, mes }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um mês" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
-                      {meses.map((mes) => (
-                        <SelectItem key={mes.value} value={mes.value}>
-                          {mes.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Ano</Label>
-                  <Select
-                    value={filtros.ano}
-                    onValueChange={(ano) =>
-                      setFiltros((prev) => ({ ...prev, ano }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um ano" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
-                      {anos.map((ano) => (
-                        <SelectItem key={ano.value} value={ano.value}>
-                          {ano.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <FiltrosRecibos
+                filtros={filtros}
+                onFiltrosChange={setFiltros}
+              />
 
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSelectAll}
-                  >
-                    {recibos && selectedRecibos.length === recibos.length ? (
-                      <CheckSquare className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Square className="h-4 w-4 mr-2" />
-                    )}
-                    Selecionar Todos
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {selectedRecibos.length} recibos selecionados
-                  </span>
-                </div>
-
                 {isLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -334,52 +165,12 @@ const Historico = () => {
                     <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    {recibos?.map((recibo) => (
-                      <Card key={recibo.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="p-0"
-                              onClick={() => handleToggleSelect(recibo.id)}
-                            >
-                              {selectedRecibos.includes(recibo.id) ? (
-                                <CheckSquare className="h-4 w-4" />
-                              ) : (
-                                <Square className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <div>
-                              <h3 className="font-semibold">
-                                Recibo #{formatarNumeroRecibo(recibo.numero_recibo)} - {recibo.pagador}
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(recibo.data), "dd/MM/yyyy")} - {formatarMoeda(recibo.valor)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(recibo.pdf_url, "_blank")}
-                            >
-                              <Printer className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDownload(recibo.pdf_url)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+                  <ListaRecibos
+                    recibos={recibos}
+                    selectedRecibos={selectedRecibos}
+                    onToggleSelect={handleToggleSelect}
+                    onDownload={handleDownload}
+                  />
                 )}
               </div>
             </div>
