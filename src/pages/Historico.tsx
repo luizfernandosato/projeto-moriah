@@ -118,6 +118,19 @@ const Historico = () => {
     }
   };
 
+  const handleDownload = async (url: string) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `recibo-${Date.now()}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(downloadUrl);
+  };
+
   const meses = [
     { value: "01", label: "Janeiro" },
     { value: "02", label: "Fevereiro" },
