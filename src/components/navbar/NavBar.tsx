@@ -1,9 +1,11 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Receipt, User } from "lucide-react";
 
 export const NavBar = () => {
+  const navigate = useNavigate();
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b">
       <div className="container mx-auto px-4">
@@ -14,7 +16,12 @@ export const NavBar = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="animated-border">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="animated-border"
+              onClick={() => navigate('/login')}
+            >
               <User className="h-4 w-4 mr-2" />
               Entrar
             </Button>

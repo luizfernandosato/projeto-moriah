@@ -3,8 +3,11 @@ import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Receipt, FileText, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <MainLayout>
       <section className="py-12 space-y-12">
@@ -16,11 +19,20 @@ const Index = () => {
             Crie, gerencie e organize seus recibos de forma simples e elegante.
           </p>
           <div className="flex justify-center gap-4 pt-4">
-            <Button size="lg" className="gap-2">
+            <Button 
+              size="lg" 
+              className="gap-2"
+              onClick={() => navigate('/login')}
+            >
               <Receipt className="h-5 w-5" />
               Começar Agora
             </Button>
-            <Button size="lg" variant="outline" className="gap-2">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => navigate('/login')}
+            >
               Saiba Mais
             </Button>
           </div>
