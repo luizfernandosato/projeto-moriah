@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -189,6 +190,9 @@ const GerarRecibo = () => {
 
       setPdfUrl(publicUrl);
       toast.success("Recibo gerado com sucesso!");
+      
+      // Abrir o PDF em uma nova janela
+      window.open(publicUrl, '_blank');
     } catch (error) {
       console.error(error);
       toast.error("Erro ao gerar recibo");

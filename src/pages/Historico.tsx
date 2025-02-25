@@ -36,24 +36,26 @@ const Historico = () => {
     queryFn: async () => {
       let query = supabase
         .from("recibos")
-        .select("*")
-        .order("data", { ascending: false });
+        .select("*");
 
+      // Filtros
       if (filtros.dataInicio) {
-        query = query.gte("data", filtros.dataInicio);
+        query = query.gte('data', filtros.dataInicio);
       }
       if (filtros.dataFim) {
-        query = query.lte("data", filtros.dataFim);
+        query = query.lte('data', filtros.dataFim);
       }
       if (filtros.mes) {
-        query = query.like("data", `%-${filtros.mes}-%`);
+        query = query.ilike('data', `%-${filtros.mes}-%`);
       }
       if (filtros.ano) {
-        query = query.like("data", `${filtros.ano}-%`);
+        query = query.ilike('data', `${filtros.ano}-%`);
       }
       if (filtros.dia) {
-        query = query.like("data", `%-${filtros.dia}`);
+        query = query.ilike('data', `%-${filtros.dia}`);
       }
+
+      query = query.order('data', { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
