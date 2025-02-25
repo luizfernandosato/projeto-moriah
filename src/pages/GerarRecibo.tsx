@@ -149,6 +149,31 @@ const GerarRecibo = () => {
   });
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
+  const fetchUltimoNumeroRecibo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recibos')
+        .select('numero_recibo')
+        .order('numero_recibo', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      const proximoNumero = data && data.length > 0 ? data[0].numero_recibo + 1 : 1;
+      setFormData(prev => ({
+        ...prev,
+        numeroRecibo: proximoNumero.toString()
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar número do recibo:', error);
+      toast.error("Erro ao gerar número do recibo");
+    }
+  };
+
+  useState(() => {
+    fetchUltimoNumeroRecibo();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'valor') {
@@ -323,11 +348,9 @@ const GerarRecibo = () => {
                 <div className="text-right">
                   <Label>Nº do Recibo</Label>
                   <Input
-                    name="numeroRecibo"
                     value={formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}
-                    onChange={handleInputChange}
+                    readOnly
                     className="text-right font-mono bg-gray-50"
-                    placeholder="000000"
                   />
                 </div>
                 {pdfUrl && (
