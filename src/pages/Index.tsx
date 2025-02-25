@@ -27,14 +27,6 @@ const Index = () => {
               <Receipt className="h-5 w-5" />
               Começar Agora
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="gap-2"
-              onClick={() => navigate('/gerar-recibo')}
-            >
-              Saiba Mais
-            </Button>
           </div>
         </div>
 
