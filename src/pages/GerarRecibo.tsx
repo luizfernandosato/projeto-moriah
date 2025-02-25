@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Download, Printer } from "lucide-react";
+import jsPDF from "jspdf";
+import { supabase } from "@/integrations/supabase/client";
 
 // Função para converter número em texto por extenso
 const valorPorExtenso = (valor: number): string => {
@@ -79,6 +81,7 @@ const GerarRecibo = () => {
     recebedor: "",
     cpfCnpjRecebedor: ""
   });
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -88,10 +91,129 @@ const GerarRecibo = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const valor = parseFloat(formData.valor);
+    const valorExtenso = valorPorExtenso(valor);
+
+    // Configurar fonte e tamanho
+    doc.setFont("helvetica");
+    doc.setFontSize(16);
+
+    // Título
+    doc.text("RECIBO", 105, 20, { align: "center" });
+    doc.setFontSize(12);
+
+    // Valor em destaque
+    doc.text(`R$ ${valor.toFixed(2)}`, 105, 40, { align: "center" });
+
+    // Conteúdo principal
+    doc.setFontSize(12);
+    const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
+      `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
+
+    const linhas = doc.splitTextToSize(texto, 180);
+    doc.text(linhas, 15, 60);
+
+    // Local e data
+    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 100);
+
+    // Linha para assinatura
+    doc.line(15, 130, 195, 130);
+
+    // Dados do recebedor
+    doc.text(`${formData.recebedor}`, 105, 140, { align: "center" });
+    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 146, { align: "center" });
+
+    return doc;
+  };
+
+  const saveRecibo = async (pdfUrl: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    const { error } = await supabase.from("recibos").insert({
+      user_id: user.id,
+      pagador: formData.pagador,
+      cpf_cnpj: formData.cpfCnpj,
+      valor: parseFloat(formData.valor),
+      valor_extenso: valorPorExtenso(parseFloat(formData.valor)),
+      descricao: formData.descricao,
+      data: formData.data,
+      local: formData.local,
+      recebedor: formData.recebedor,
+      cpf_cnpj_recebedor: formData.cpfCnpjRecebedor,
+      pdf_url: pdfUrl
+    });
+
+    if (error) {
+      toast.error("Erro ao salvar recibo");
+      console.error(error);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui você pode implementar a lógica para gerar o PDF do recibo
-    toast.success("Recibo gerado com sucesso!");
+    
+    try {
+      // Gerar PDF
+      const doc = generatePDF();
+      
+      // Converter PDF para Blob
+      const pdfBlob = doc.output('blob');
+      
+      // Upload do PDF para o Storage
+      const fileName = `recibos/${Date.now()}_recibo.pdf`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('recibos')
+        .upload(fileName, pdfBlob, {
+          contentType: 'application/pdf'
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL pública do PDF
+      const { data: { publicUrl } } = supabase.storage
+        .from('recibos')
+        .getPublicUrl(fileName);
+
+      // Salvar recibo no banco
+      const saved = await saveRecibo(publicUrl);
+      if (!saved) throw new Error("Erro ao salvar recibo");
+
+      setPdfUrl(publicUrl);
+      toast.success("Recibo gerado com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao gerar recibo");
+    }
+  };
+
+  const handlePrint = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+    }
+  };
+
+  const handleDownload = async () => {
+    if (pdfUrl) {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'recibo.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -99,10 +221,31 @@ const GerarRecibo = () => {
       <div className="container mx-auto py-8">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <h2 className="text-2xl font-bold text-center">Gerar Recibo</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Gerar Recibo</h2>
+              {pdfUrl && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePrint}
+                  >
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDownload}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           
           <form onSubmit={handleSubmit}>
+            {/* Dados do Pagador */}
             <CardContent className="space-y-6">
               {/* Dados do Pagador */}
               <div className="space-y-4">

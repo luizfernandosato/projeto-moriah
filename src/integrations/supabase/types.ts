@@ -9,7 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      recibos: {
+        Row: {
+          cpf_cnpj: string
+          cpf_cnpj_recebedor: string
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          local: string
+          pagador: string
+          pdf_url: string | null
+          recebedor: string
+          user_id: string
+          valor: number
+          valor_extenso: string
+        }
+        Insert: {
+          cpf_cnpj: string
+          cpf_cnpj_recebedor: string
+          created_at?: string
+          data: string
+          descricao: string
+          id?: string
+          local: string
+          pagador: string
+          pdf_url?: string | null
+          recebedor: string
+          user_id: string
+          valor: number
+          valor_extenso: string
+        }
+        Update: {
+          cpf_cnpj?: string
+          cpf_cnpj_recebedor?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          local?: string
+          pagador?: string
+          pdf_url?: string | null
+          recebedor?: string
+          user_id?: string
+          valor?: number
+          valor_extenso?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
