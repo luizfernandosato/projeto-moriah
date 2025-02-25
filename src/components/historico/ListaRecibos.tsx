@@ -9,7 +9,7 @@ interface Recibo {
   pagador: string;
   valor: number;
   data: string;
-  pdf_url: string;
+  pdf_url: string | null;
   numero_recibo: number;
 }
 
@@ -21,12 +21,10 @@ interface ListaRecibosProps {
 }
 
 const formatarMoeda = (valor: number) => {
-  return valor.toLocaleString('pt-BR', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+    currency: 'BRL'
+  }).format(valor);
 };
 
 const formatarNumeroRecibo = (numero: number) => {
@@ -41,7 +39,7 @@ export const ListaRecibos = ({
 }: ListaRecibosProps) => {
   return (
     <div className="grid gap-4">
-      {recibos.map((recibo) => (
+      {Array.isArray(recibos) && recibos.map((recibo) => (
         <Card key={recibo.id} className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -70,14 +68,16 @@ export const ListaRecibos = ({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => window.open(recibo.pdf_url, "_blank")}
+                onClick={() => recibo.pdf_url && window.open(recibo.pdf_url, "_blank")}
+                disabled={!recibo.pdf_url}
               >
                 <Printer className="h-4 w-4" />
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onDownload(recibo.pdf_url)}
+                onClick={() => recibo.pdf_url && onDownload(recibo.pdf_url)}
+                disabled={!recibo.pdf_url}
               >
                 <Download className="h-4 w-4" />
               </Button>

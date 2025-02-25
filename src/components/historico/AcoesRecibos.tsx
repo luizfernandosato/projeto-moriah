@@ -19,13 +19,16 @@ export const AcoesRecibos = ({
   onPrintSelected,
   onDownloadSelected,
 }: AcoesRecibosProps) => {
+  if (totalRecibos === 0) return null;
+
   return (
-    <>
-      <div className="flex justify-between items-center mb-4">
+    <div className="flex flex-col sm:flex-row gap-4 items-center">
+      <div className="flex items-center gap-4">
         <Button
           size="sm"
           variant="outline"
           onClick={onSelectAll}
+          className="whitespace-nowrap"
         >
           {allSelected ? (
             <CheckSquare className="h-4 w-4 mr-2" />
@@ -34,8 +37,8 @@ export const AcoesRecibos = ({
           )}
           Selecionar Todos
         </Button>
-        <span className="text-sm text-muted-foreground">
-          {selectedCount} recibos selecionados
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {selectedCount} de {totalRecibos} selecionados
         </span>
       </div>
       <div className="flex gap-2">
@@ -44,20 +47,22 @@ export const AcoesRecibos = ({
           variant="outline"
           onClick={onPrintSelected}
           disabled={selectedCount === 0}
+          className="whitespace-nowrap"
         >
           <Printer className="h-4 w-4 mr-2" />
-          Imprimir Selecionados
+          Imprimir
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={onDownloadSelected}
           disabled={selectedCount === 0}
+          className="whitespace-nowrap"
         >
           <Download className="h-4 w-4 mr-2" />
-          Baixar Selecionados
+          Baixar
         </Button>
       </div>
-    </>
+    </div>
   );
 };
