@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const valorPorExtenso = (valor: number): string => {
   if (valor === 0) return "Zero reais";
-  
-  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez",
-    "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
-  const dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
-  const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
-  const milhares = ["", "mil", "milhões", "bilhões"];
+
+  const unidades = ["", "Um", "Dois", "Três", "Quatro", "Cinco", "Seis", "Sete", "Oito", "Nove", "Dez",
+    "Onze", "Doze", "Treze", "Quatorze", "Quinze", "Dezesseis", "Dezessete", "Dezoito", "Dezenove"];
+  const dezenas = ["", "", "Vinte", "Trinta", "Quarenta", "Cinquenta", "Sessenta", "Setenta", "Oitenta", "Noventa"];
+  const centenas = ["", "Cento", "Duzentos", "Trezentos", "Quatrocentos", "Quinhentos", "Seiscentos", "Setecentos", "Oitocentos", "Novecentos"];
 
   const partes = valor.toFixed(2).split(".");
   const reais = parseInt(partes[0]);
@@ -26,6 +24,7 @@ const valorPorExtenso = (valor: number): string => {
 
   const converterGrupo = (numero: number): string => {
     if (numero === 0) return "";
+    if (numero === 100) return "Cem";
     if (numero <= 19) return unidades[numero];
     
     const centena = Math.floor(numero / 100);
@@ -35,70 +34,84 @@ const valorPorExtenso = (valor: number): string => {
     let resultado = "";
     
     if (centena > 0) {
-      if (numero === 100) {
-        return "cem";
-      }
-      resultado += centenas[centena] + " ";
+      resultado += centenas[centena];
+      if (dezena > 0 || unidade > 0) resultado += " e ";
     }
     
     if (dezena > 0) {
       if ((numero % 100) <= 19 && (numero % 100) > 0) {
         resultado += unidades[numero % 100];
-        return resultado.trim();
+        return resultado;
       }
       resultado += dezenas[dezena];
       if (unidade > 0) {
-        resultado += " e " + unidades[unidade];
+        resultado += " e " + unidades[unidade].toLowerCase();
       }
     } else if (unidade > 0) {
       resultado += unidades[unidade];
     }
     
-    return resultado.trim();
+    return resultado;
   };
 
-  const converterMilhar = (numero: number): string => {
-    const grupos = [];
-    let numeroTemp = numero;
+  const converterValor = (numero: number): string => {
+    if (numero === 0) return "";
+    if (numero === 1000) return "Mil";
+    if (numero === 1000000) return "Um milhão";
+    if (numero === 1000000000) return "Um bilhão";
     
-    while (numeroTemp > 0) {
-      grupos.push(numeroTemp % 1000);
-      numeroTemp = Math.floor(numeroTemp / 1000);
+    if (numero >= 1000000000) {
+      const bilhoes = Math.floor(numero / 1000000000);
+      const resto = numero % 1000000000;
+      let resultado = converterGrupo(bilhoes) + " bilhão" + (bilhoes > 1 ? "ões" : "");
+      if (resto > 0) resultado += " e " + converterValor(resto);
+      return resultado;
     }
-
-    let resultado = "";
     
-    for (let i = grupos.length - 1; i >= 0; i--) {
-      if (grupos[i] !== 0) {
-        if (resultado !== "") resultado += " ";
-        
-        // Tratamento especial para milhares
-        if (i === 1 && grupos[i] === 1) {
-          resultado += "mil";
+    if (numero >= 1000000) {
+      const milhoes = Math.floor(numero / 1000000);
+      const resto = numero % 1000000;
+      let resultado = converterGrupo(milhoes) + " milhão" + (milhoes > 1 ? "ões" : "");
+      if (resto > 0) resultado += " e " + converterValor(resto);
+      return resultado;
+    }
+    
+    if (numero >= 1000) {
+      const milhares = Math.floor(numero / 1000);
+      const resto = numero % 1000;
+      let resultado = "";
+      if (milhares === 1) {
+        resultado = "Mil";
+      } else {
+        resultado = converterGrupo(milhares) + " mil";
+      }
+      if (resto > 0) {
+        if (resto < 100) {
+          resultado += " e " + converterValor(resto);
         } else {
-          resultado += converterGrupo(grupos[i]);
-          if (i > 0) resultado += " " + milhares[i];
+          resultado += " " + converterValor(resto);
         }
       }
+      return resultado;
     }
     
-    return resultado;
+    return converterGrupo(numero);
   };
 
   let resultado = "";
   
   if (reais > 0) {
-    resultado += converterMilhar(reais);
+    resultado += converterValor(reais);
     resultado += " " + (reais === 1 ? "real" : "reais");
   }
   
   if (centavos > 0) {
     if (reais > 0) resultado += " e ";
-    resultado += converterGrupo(centavos);
+    resultado += converterValor(centavos).toLowerCase();
     resultado += " " + (centavos === 1 ? "centavo" : "centavos");
   }
   
-  return resultado.charAt(0).toUpperCase() + resultado.slice(1);
+  return resultado;
 };
 
 const formatarNumero = (valor: string) => {
