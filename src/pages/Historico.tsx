@@ -19,6 +19,15 @@ interface Recibo {
   pdf_url: string;
 }
 
+const formatarMoeda = (valor: number) => {
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 const Historico = () => {
   const [filtros, setFiltros] = useState({
     dataInicio: "",
@@ -33,9 +42,13 @@ const Historico = () => {
   const { data: recibos, isLoading } = useQuery({
     queryKey: ["recibos", filtros],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       let query = supabase
         .from("recibos")
         .select("id, pagador, valor, data, pdf_url")
+        .eq('user_id', user.id)
         .order('data', { ascending: false });
 
       if (filtros.dataInicio || filtros.dataFim || filtros.mes || filtros.ano || filtros.dia) {
@@ -57,11 +70,13 @@ const Historico = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar recibos:", error);
+        throw error;
+      }
       return data as Recibo[];
     },
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    staleTime: 1000 * 60, // Cache por 1 minuto
   });
 
   const handleSelectAll = () => {
@@ -332,8 +347,7 @@ const Historico = () => {
                             <div>
                               <h3 className="font-semibold">{recibo.pagador}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {format(new Date(recibo.data), "dd/MM/yyyy")} - R${" "}
-                                {recibo.valor.toFixed(2)}
+                                {format(new Date(recibo.data), "dd/MM/yyyy")} - {formatarMoeda(recibo.valor)}
                               </p>
                             </div>
                           </div>
