@@ -57,22 +57,24 @@ const Historico = () => {
         .eq('user_id', user.id)
         .order('data', { ascending: false });
 
-      if (filtros.dataInicio || filtros.dataFim || filtros.mes || filtros.ano || filtros.dia) {
-        if (filtros.dataInicio) {
-          query = query.gte('data', filtros.dataInicio);
-        }
-        if (filtros.dataFim) {
-          query = query.lte('data', filtros.dataFim);
-        }
-        if (filtros.mes) {
-          query = query.ilike('data', `%-${filtros.mes}-%`);
-        }
-        if (filtros.ano) {
-          query = query.ilike('data', `${filtros.ano}-%`);
-        }
-        if (filtros.dia) {
-          query = query.ilike('data', `%-${filtros.dia}`);
-        }
+      if (filtros.dataInicio) {
+        query = query.gte('data', filtros.dataInicio);
+      }
+      if (filtros.dataFim) {
+        query = query.lte('data', filtros.dataFim);
+      }
+      if (filtros.mes && filtros.ano) {
+        const dataInicio = `${filtros.ano}-${filtros.mes}-01`;
+        const dataFim = `${filtros.ano}-${filtros.mes}-31`;
+        query = query.gte('data', dataInicio).lte('data', dataFim);
+      } else if (filtros.ano) {
+        const dataInicio = `${filtros.ano}-01-01`;
+        const dataFim = `${filtros.ano}-12-31`;
+        query = query.gte('data', dataInicio).lte('data', dataFim);
+      }
+      if (filtros.dia && filtros.mes && filtros.ano) {
+        const data = `${filtros.ano}-${filtros.mes}-${filtros.dia}`;
+        query = query.eq('data', data);
       }
 
       const { data, error } = await query;
@@ -82,7 +84,6 @@ const Historico = () => {
       }
       return data as Recibo[];
     },
-    staleTime: 1000 * 60, // Cache por 1 minuto
   });
 
   const handleSelectAll = () => {
