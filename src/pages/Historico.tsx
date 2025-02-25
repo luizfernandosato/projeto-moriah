@@ -9,17 +9,19 @@ import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
 import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
 import { Loader2 } from "lucide-react";
+import { useUser } from "@/hooks/useAuth";
 
 interface Recibo {
   id: string;
   pagador: string;
   valor: number;
   data: string;
-  pdf_url: string;
+  pdf_url: string | null;
   numero_recibo: number;
 }
 
 const Historico = () => {
+  const { user } = useUser();
   const [filtros, setFiltros] = useState({
     dataInicio: "",
     dataFim: "",
@@ -30,19 +32,16 @@ const Historico = () => {
 
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
 
-  const { data: recibos, isLoading, error } = useQuery({
-    queryKey: ["recibos", filtros],
+  const { data: recibos, isLoading } = useQuery({
+    queryKey: ["recibos", filtros, user?.id],
     queryFn: async () => {
-      console.log("Iniciando busca de recibos...");
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Buscando recibos com filtros:", filtros);
       
       if (!user) {
         console.log("Usuário não autenticado");
         throw new Error("Usuário não autenticado");
       }
 
-      console.log("User ID:", user.id);
-      
       let query = supabase
         .from("recibos")
         .select("id, pagador, valor, data, pdf_url, numero_recibo")
@@ -74,18 +73,15 @@ const Historico = () => {
       
       if (error) {
         console.error("Erro ao buscar recibos:", error);
+        toast.error("Erro ao carregar recibos");
         throw error;
       }
       
       console.log("Recibos encontrados:", data);
       return data as Recibo[];
     },
+    enabled: !!user,
   });
-
-  if (error) {
-    console.error("Erro na query:", error);
-    toast.error("Erro ao carregar recibos");
-  }
 
   const handleSelectAll = () => {
     if (recibos) {
@@ -113,7 +109,8 @@ const Historico = () => {
 
     const selectedPdfs = recibos
       ?.filter(r => selectedRecibos.includes(r.id))
-      .map(r => r.pdf_url);
+      .map(r => r.pdf_url)
+      .filter(Boolean);
 
     selectedPdfs?.forEach(url => {
       if (url) window.open(url, "_blank");
@@ -128,7 +125,8 @@ const Historico = () => {
 
     const selectedPdfs = recibos
       ?.filter(r => selectedRecibos.includes(r.id))
-      .map(r => r.pdf_url);
+      .map(r => r.pdf_url)
+      .filter(Boolean);
 
     for (const url of selectedPdfs || []) {
       if (url) await handleDownload(url);
@@ -152,6 +150,22 @@ const Historico = () => {
       toast.error("Erro ao baixar o arquivo");
     }
   };
+
+  if (!user) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">
+                Você precisa estar logado para ver seus recibos.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -182,11 +196,7 @@ const Historico = () => {
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ) : error ? (
-                  <div className="text-center p-8 text-destructive">
-                    <p>Erro ao carregar recibos. Por favor, tente novamente.</p>
-                  </div>
-                ) : recibos?.length === 0 ? (
+                ) : !recibos || recibos.length === 0 ? (
                   <div className="text-center p-8">
                     <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
                   </div>
