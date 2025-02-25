@@ -127,6 +127,10 @@ const formatarNumero = (valor: string) => {
   });
 };
 
+const formatarNumeroRecibo = (numero: number) => {
+  return numero.toString().padStart(6, '0');
+};
+
 const GerarRecibo = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -140,7 +144,8 @@ const GerarRecibo = () => {
     data: new Date().toISOString().split('T')[0],
     local: "",
     recebedor: "",
-    cpfCnpjRecebedor: ""
+    cpfCnpjRecebedor: "",
+    numeroRecibo: ""
   });
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -314,24 +319,36 @@ const GerarRecibo = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Gerar Recibo</h2>
-              {pdfUrl && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handlePrint}
-                  >
-                    <Printer className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleDownload}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
+              <div className="flex gap-2">
+                <div className="text-right">
+                  <Label>Nº do Recibo</Label>
+                  <Input
+                    name="numeroRecibo"
+                    value={formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}
+                    onChange={handleInputChange}
+                    className="text-right font-mono bg-gray-50"
+                    placeholder="000000"
+                  />
                 </div>
-              )}
+                {pdfUrl && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handlePrint}
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownload}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </CardHeader>
           
