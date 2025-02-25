@@ -22,7 +22,7 @@ const Index = () => {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => navigate('/gerar-recibo')}
+              onClick={() => navigate('/login')}
             >
               <Receipt className="h-5 w-5" />
               Começar Agora
