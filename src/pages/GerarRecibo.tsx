@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
@@ -170,7 +171,7 @@ const GerarRecibo = () => {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     fetchUltimoNumeroRecibo();
   }, []);
 
