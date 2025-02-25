@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ interface Recibo {
   valor: number;
   data: string;
   pdf_url: string;
+  numero_recibo: number;
 }
 
 const formatarMoeda = (valor: number) => {
@@ -26,6 +28,10 @@ const formatarMoeda = (valor: number) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatarNumeroRecibo = (numero: number) => {
+  return numero.toString().padStart(6, '0');
 };
 
 const Historico = () => {
@@ -47,7 +53,7 @@ const Historico = () => {
 
       let query = supabase
         .from("recibos")
-        .select("id, pagador, valor, data, pdf_url")
+        .select("id, pagador, valor, data, pdf_url, numero_recibo")
         .eq('user_id', user.id)
         .order('data', { ascending: false });
 
@@ -345,7 +351,9 @@ const Historico = () => {
                               )}
                             </Button>
                             <div>
-                              <h3 className="font-semibold">{recibo.pagador}</h3>
+                              <h3 className="font-semibold">
+                                Recibo #{formatarNumeroRecibo(recibo.numero_recibo)} - {recibo.pagador}
+                              </h3>
                               <p className="text-sm text-muted-foreground">
                                 {format(new Date(recibo.data), "dd/MM/yyyy")} - {formatarMoeda(recibo.valor)}
                               </p>

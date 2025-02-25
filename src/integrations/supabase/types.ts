@@ -18,6 +18,7 @@ export type Database = {
           descricao: string
           id: string
           local: string
+          numero_recibo: number
           pagador: string
           pdf_url: string | null
           recebedor: string
@@ -33,6 +34,7 @@ export type Database = {
           descricao: string
           id?: string
           local: string
+          numero_recibo?: number
           pagador: string
           pdf_url?: string | null
           recebedor: string
@@ -48,6 +50,7 @@ export type Database = {
           descricao?: string
           id?: string
           local?: string
+          numero_recibo?: number
           pagador?: string
           pdf_url?: string | null
           recebedor?: string
