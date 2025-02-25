@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Upload } from "lucide-react";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -68,9 +68,22 @@ const valorPorExtenso = (valor: number): string => {
   return resultado.charAt(0).toUpperCase() + resultado.slice(1);
 };
 
+const formatarNumero = (valor: string) => {
+  const numero = valor.replace(/\D/g, '');
+  const partes = [];
+  
+  for (let i = numero.length - 1; i >= 0; i -= 3) {
+    partes.unshift(numero.slice(Math.max(0, i - 2), i + 1));
+  }
+  
+  return partes.join('.');
+};
+
 const GerarRecibo = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -85,38 +98,75 @@ const GerarRecibo = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'valor') {
+      const numeroLimpo = value.replace(/\D/g, '');
+      const valorFormatado = formatarNumero(numeroLimpo);
+      setFormData(prev => ({
+        ...prev,
+        [name]: valorFormatado
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const fileName = `logos/${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos')
+        .getPublicUrl(fileName);
+
+      setLogoUrl(publicUrl);
+      toast.success("Logo carregada com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar logo");
+    }
   };
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    const valor = parseFloat(formData.valor);
-    const valorExtenso = valorPorExtenso(valor);
+    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '')) / 100;
+    const valorExtenso = valorPorExtenso(valorNumerico);
 
     doc.setFont("helvetica");
     doc.setFontSize(16);
 
-    doc.text("RECIBO", 105, 20, { align: "center" });
+    if (logoUrl) {
+      doc.addImage(logoUrl, 'JPEG', 15, 15, 50, 20);
+    }
+
+    doc.text("RECIBO", 105, 40, { align: "center" });
     doc.setFontSize(12);
 
-    doc.text(`R$ ${valor.toFixed(2)}`, 105, 40, { align: "center" });
+    doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 60, { align: "center" });
 
     doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
       `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
 
     const linhas = doc.splitTextToSize(texto, 180);
-    doc.text(linhas, 15, 60);
+    doc.text(linhas, 15, 80);
 
-    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 100);
+    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 120);
 
-    doc.line(15, 130, 195, 130);
+    doc.line(15, 150, 195, 150);
 
-    doc.text(`${formData.recebedor}`, 105, 140, { align: "center" });
-    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 146, { align: "center" });
+    doc.text(`${formData.recebedor}`, 105, 160, { align: "center" });
+    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 166, { align: "center" });
 
     return doc;
   };
@@ -128,12 +178,14 @@ const GerarRecibo = () => {
       return;
     }
 
+    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '')) / 100;
+
     const { error } = await supabase.from("recibos").insert({
       user_id: user.id,
       pagador: formData.pagador,
       cpf_cnpj: formData.cpfCnpj,
-      valor: parseFloat(formData.valor),
-      valor_extenso: valorPorExtenso(parseFloat(formData.valor)),
+      valor: valorNumerico,
+      valor_extenso: valorPorExtenso(valorNumerico),
       descricao: formData.descricao,
       data: formData.data,
       local: formData.local,
@@ -239,6 +291,30 @@ const GerarRecibo = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div className="space-y-4">
+                <Label>Logo da Empresa</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleLogoUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {logoUrl ? 'Trocar Logo' : 'Carregar Logo'}
+                  </Button>
+                  {logoUrl && (
+                    <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Dados do Pagador</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -272,17 +348,16 @@ const GerarRecibo = () => {
                     <Input
                       id="valor"
                       name="valor"
-                      type="number"
-                      step="0.01"
                       value={formData.valor}
                       onChange={handleInputChange}
                       required
+                      placeholder="0,00"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Valor por Extenso</Label>
                     <Input
-                      value={formData.valor ? valorPorExtenso(parseFloat(formData.valor)) : ""}
+                      value={formData.valor ? valorPorExtenso(parseFloat(formData.valor.replace(/\./g, '')) / 100) : ""}
                       readOnly
                       className="bg-gray-50"
                     />
