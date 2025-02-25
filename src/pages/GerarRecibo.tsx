@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,11 @@ import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
 const valorPorExtenso = (valor: number): string => {
-  if (valor === 0) return "zero";
+  if (valor === 0) return "Zero reais";
   
-  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
-  const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez",
+    "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  const dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
   const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
   const milhares = ["", "mil", "milhões", "bilhões"];
 
@@ -24,6 +26,7 @@ const valorPorExtenso = (valor: number): string => {
 
   const converterGrupo = (numero: number): string => {
     if (numero === 0) return "";
+    if (numero <= 19) return unidades[numero];
     
     const centena = Math.floor(numero / 100);
     const dezena = Math.floor((numero % 100) / 10);
@@ -32,30 +35,60 @@ const valorPorExtenso = (valor: number): string => {
     let resultado = "";
     
     if (centena > 0) {
+      if (numero === 100) {
+        return "cem";
+      }
       resultado += centenas[centena] + " ";
     }
     
     if (dezena > 0) {
-      if (dezena === 1 && unidade > 0) {
-        const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
-        resultado += especiais[unidade] + " ";
+      if ((numero % 100) <= 19 && (numero % 100) > 0) {
+        resultado += unidades[numero % 100];
         return resultado.trim();
       }
-      resultado += dezenas[dezena] + " ";
-    }
-    
-    if (unidade > 0) {
-      if (dezena > 0) resultado += "e ";
-      resultado += unidades[unidade] + " ";
+      resultado += dezenas[dezena];
+      if (unidade > 0) {
+        resultado += " e " + unidades[unidade];
+      }
+    } else if (unidade > 0) {
+      resultado += unidades[unidade];
     }
     
     return resultado.trim();
   };
 
+  const converterMilhar = (numero: number): string => {
+    const grupos = [];
+    let numeroTemp = numero;
+    
+    while (numeroTemp > 0) {
+      grupos.push(numeroTemp % 1000);
+      numeroTemp = Math.floor(numeroTemp / 1000);
+    }
+
+    let resultado = "";
+    
+    for (let i = grupos.length - 1; i >= 0; i--) {
+      if (grupos[i] !== 0) {
+        if (resultado !== "") resultado += " ";
+        
+        // Tratamento especial para milhares
+        if (i === 1 && grupos[i] === 1) {
+          resultado += "mil";
+        } else {
+          resultado += converterGrupo(grupos[i]);
+          if (i > 0) resultado += " " + milhares[i];
+        }
+      }
+    }
+    
+    return resultado;
+  };
+
   let resultado = "";
   
   if (reais > 0) {
-    resultado += converterGrupo(reais);
+    resultado += converterMilhar(reais);
     resultado += " " + (reais === 1 ? "real" : "reais");
   }
   
