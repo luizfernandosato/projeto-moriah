@@ -15,7 +15,7 @@ export const NavBar = () => {
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <Receipt className="h-6 w-6 text-primary" />
-            <span className="text-xl font-semibold">Recibo-Matic</span>
+            <span className="text-xl font-semibold">Projeto-Moriah</span>
           </Link>
           
           <div className="flex items-center space-x-4">

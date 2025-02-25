@@ -13,7 +13,7 @@ const Index = () => {
       <section className="py-12 space-y-12">
         <div className="text-center space-y-4">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Gerador de Recibos Profissional
+            Projeto-Moriah
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Crie, gerencie e organize seus recibos de forma simples e elegante.
