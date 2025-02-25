@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
 import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
+import { Loader2 } from "lucide-react";
 
 interface Recibo {
   id: string;
@@ -29,18 +30,26 @@ const Historico = () => {
 
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
 
-  const { data: recibos, isLoading } = useQuery({
+  const { data: recibos, isLoading, error } = useQuery({
     queryKey: ["recibos", filtros],
     queryFn: async () => {
+      console.log("Iniciando busca de recibos...");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      
+      if (!user) {
+        console.log("Usuário não autenticado");
+        throw new Error("Usuário não autenticado");
+      }
 
+      console.log("User ID:", user.id);
+      
       let query = supabase
         .from("recibos")
         .select("id, pagador, valor, data, pdf_url, numero_recibo")
         .eq('user_id', user.id)
         .order('data', { ascending: false });
 
+      // Aplicar filtros
       if (filtros.dataInicio) {
         query = query.gte('data', filtros.dataInicio);
       }
@@ -48,8 +57,8 @@ const Historico = () => {
         query = query.lte('data', filtros.dataFim);
       }
       if (filtros.mes && filtros.ano) {
-        const dataInicio = `${filtros.ano}-${filtros.mes}-01`;
-        const dataFim = `${filtros.ano}-${filtros.mes}-31`;
+        const dataInicio = `${filtros.ano}-${filtros.mes.padStart(2, '0')}-01`;
+        const dataFim = `${filtros.ano}-${filtros.mes.padStart(2, '0')}-31`;
         query = query.gte('data', dataInicio).lte('data', dataFim);
       } else if (filtros.ano) {
         const dataInicio = `${filtros.ano}-01-01`;
@@ -57,18 +66,26 @@ const Historico = () => {
         query = query.gte('data', dataInicio).lte('data', dataFim);
       }
       if (filtros.dia && filtros.mes && filtros.ano) {
-        const data = `${filtros.ano}-${filtros.mes}-${filtros.dia}`;
+        const data = `${filtros.ano}-${filtros.mes.padStart(2, '0')}-${filtros.dia.padStart(2, '0')}`;
         query = query.eq('data', data);
       }
 
       const { data, error } = await query;
+      
       if (error) {
         console.error("Erro ao buscar recibos:", error);
         throw error;
       }
+      
+      console.log("Recibos encontrados:", data);
       return data as Recibo[];
     },
   });
+
+  if (error) {
+    console.error("Erro na query:", error);
+    toast.error("Erro ao carregar recibos");
+  }
 
   const handleSelectAll = () => {
     if (recibos) {
@@ -99,7 +116,7 @@ const Historico = () => {
       .map(r => r.pdf_url);
 
     selectedPdfs?.forEach(url => {
-      window.open(url, "_blank");
+      if (url) window.open(url, "_blank");
     });
   };
 
@@ -114,21 +131,26 @@ const Historico = () => {
       .map(r => r.pdf_url);
 
     for (const url of selectedPdfs || []) {
-      await handleDownload(url);
+      if (url) await handleDownload(url);
     }
   };
 
   const handleDownload = async (url: string) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = `recibo-${Date.now()}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(downloadUrl);
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `recibo-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Erro ao baixar arquivo:", error);
+      toast.error("Erro ao baixar o arquivo");
+    }
   };
 
   return (
@@ -136,7 +158,7 @@ const Historico = () => {
       <div className="container mx-auto py-8">
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <h2 className="text-2xl font-bold">Histórico de Recibos</h2>
               <AcoesRecibos
                 totalRecibos={recibos?.length || 0}
@@ -158,7 +180,11 @@ const Historico = () => {
               <div className="space-y-4">
                 {isLoading ? (
                   <div className="flex items-center justify-center p-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : error ? (
+                  <div className="text-center p-8 text-destructive">
+                    <p>Erro ao carregar recibos. Por favor, tente novamente.</p>
                   </div>
                 ) : recibos?.length === 0 ? (
                   <div className="text-center p-8">
