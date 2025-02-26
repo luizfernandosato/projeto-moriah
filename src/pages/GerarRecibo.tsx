@@ -312,9 +312,7 @@ const GerarRecibo = () => {
     const width = img.width * ratio;
     const height = img.height * ratio;
     
-    const x = (210 - width) / 2; // 210 é a largura da página A4 em mm
-    
-    doc.addImage(logoUrl, 'JPEG', x, 15, width, height);
+    doc.addImage(logoUrl, 'JPEG', 15, 15, width, height);
 
     doc.setFontSize(8);
     doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 15, { align: "right" });
@@ -329,7 +327,7 @@ const GerarRecibo = () => {
     doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 60, { align: "right" });
 
     doc.setFontSize(16);
-    doc.text("RECIBO", 105, 70, { align: "center" });
+    doc.text("RECIBO DE", 105, 70, { align: "center" });
     doc.setFontSize(12);
     doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 80, { align: "center" });
 
