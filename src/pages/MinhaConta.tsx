@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,20 @@ const MinhaConta = () => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const getUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.name) {
+        setUserName(user.user_metadata.name);
+      } else if (user?.email) {
+        setUserName(user.email);
+      }
+    };
+
+    getUserData();
+  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,6 +60,11 @@ const MinhaConta = () => {
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-bold text-center">Minha Conta</h2>
+            {userName && (
+              <p className="text-center text-gray-600 mt-2">
+                Usuário: {userName}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdatePassword} className="space-y-4">
