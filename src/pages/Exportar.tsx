@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
-import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface Recibo {
   id: string;
@@ -19,38 +20,34 @@ interface Recibo {
   numero_recibo: number;
 }
 
+const meses = [
+  { value: "1", label: "Janeiro" },
+  { value: "2", label: "Fevereiro" },
+  { value: "3", label: "Março" },
+  { value: "4", label: "Abril" },
+  { value: "5", label: "Maio" },
+  { value: "6", label: "Junho" },
+  { value: "7", label: "Julho" },
+  { value: "8", label: "Agosto" },
+  { value: "9", label: "Setembro" },
+  { value: "10", label: "Outubro" },
+  { value: "11", label: "Novembro" },
+  { value: "12", label: "Dezembro" },
+];
+
 const Exportar = () => {
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
-  const [filtros, setFiltros] = useState({
-    dataInicio: "",
-    dataFim: "",
-    mes: "",
-    ano: "",
-    dia: "",
-  });
+  const [mesSelecionado, setMesSelecionado] = useState<string>("");
 
   const { data: recibos, isLoading } = useQuery({
-    queryKey: ["recibos", filtros],
+    queryKey: ["recibos", mesSelecionado],
     queryFn: async () => {
       let query = supabase
         .from("recibos")
         .select("id, pagador, valor, data, pdf_url, numero_recibo");
 
-      // Aplicar filtros
-      if (filtros.dia || filtros.mes || filtros.ano) {
-        const dataFiltros = [];
-        
-        if (filtros.ano) {
-          dataFiltros.push(`extract(year from data) = ${filtros.ano}`);
-        }
-        if (filtros.mes) {
-          dataFiltros.push(`extract(month from data) = ${filtros.mes}`);
-        }
-        if (filtros.dia) {
-          dataFiltros.push(`extract(day from data) = ${filtros.dia}`);
-        }
-
-        query = query.or(dataFiltros.join(','));
+      if (mesSelecionado) {
+        query = query.eq('EXTRACT(month FROM data)', parseInt(mesSelecionado));
       }
 
       const { data, error } = await query.order('data', { ascending: false });
@@ -152,10 +149,22 @@ const Exportar = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <FiltrosRecibos
-                filtros={filtros}
-                onFiltrosChange={setFiltros}
-              />
+              <div className="w-[200px]">
+                <Label>Filtrar por Mês</Label>
+                <Select value={mesSelecionado} onValueChange={setMesSelecionado}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os meses</SelectItem>
+                    {meses.map((mes) => (
+                      <SelectItem key={mes.value} value={mes.value}>
+                        {mes.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
               <div className="space-y-4">
                 {isLoading ? (
