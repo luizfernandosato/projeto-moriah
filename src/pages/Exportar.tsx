@@ -8,8 +8,6 @@ import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 
 interface Recibo {
   id: string;
@@ -20,48 +18,25 @@ interface Recibo {
   numero_recibo: number;
 }
 
-const meses = [
-  { value: "1", label: "Janeiro" },
-  { value: "2", label: "Fevereiro" },
-  { value: "3", label: "Março" },
-  { value: "4", label: "Abril" },
-  { value: "5", label: "Maio" },
-  { value: "6", label: "Junho" },
-  { value: "7", label: "Julho" },
-  { value: "8", label: "Agosto" },
-  { value: "9", label: "Setembro" },
-  { value: "10", label: "Outubro" },
-  { value: "11", label: "Novembro" },
-  { value: "12", label: "Dezembro" },
-];
-
 const Exportar = () => {
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
-  const [mesSelecionado, setMesSelecionado] = useState<string>("");
-
-  const fetchRecibos = async () => {
-    let query = supabase
-      .from("recibos")
-      .select("id, pagador, valor, data, pdf_url, numero_recibo");
-
-    if (mesSelecionado) {
-      query = query.eq('EXTRACT(month FROM data)::integer', parseInt(mesSelecionado));
-    }
-
-    const { data, error } = await query.order('data', { ascending: false });
-    
-    if (error) {
-      console.error("Erro ao buscar recibos:", error);
-      toast.error("Erro ao carregar recibos");
-      throw error;
-    }
-    
-    return data as Recibo[];
-  };
 
   const { data: recibos, isLoading } = useQuery({
-    queryKey: ["recibos", mesSelecionado],
-    queryFn: fetchRecibos
+    queryKey: ["recibos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recibos")
+        .select("id, pagador, valor, data, pdf_url, numero_recibo")
+        .order('data', { ascending: false });
+
+      if (error) {
+        console.error("Erro ao buscar recibos:", error);
+        toast.error("Erro ao carregar recibos");
+        throw error;
+      }
+      
+      return data as Recibo[];
+    },
   });
 
   const handleSelectAll = () => {
@@ -150,42 +125,23 @@ const Exportar = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              <div className="w-[200px]">
-                <Label>Filtrar por Mês</Label>
-                <Select value={mesSelecionado} onValueChange={setMesSelecionado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todos os meses</SelectItem>
-                    {meses.map((mes) => (
-                      <SelectItem key={mes.value} value={mes.value}>
-                        {mes.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-4">
-                {isLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : !recibos || recibos.length === 0 ? (
-                  <div className="text-center p-8">
-                    <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
-                  </div>
-                ) : (
-                  <ListaRecibos
-                    recibos={recibos}
-                    selectedRecibos={selectedRecibos}
-                    onToggleSelect={handleToggleSelect}
-                    onDownload={handleDownload}
-                  />
-                )}
-              </div>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : !recibos || recibos.length === 0 ? (
+                <div className="text-center p-8">
+                  <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
+                </div>
+              ) : (
+                <ListaRecibos
+                  recibos={recibos}
+                  selectedRecibos={selectedRecibos}
+                  onToggleSelect={handleToggleSelect}
+                  onDownload={handleDownload}
+                />
+              )}
             </div>
           </CardContent>
         </Card>
