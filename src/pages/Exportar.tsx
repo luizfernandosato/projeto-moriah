@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
+import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -20,14 +21,39 @@ interface Recibo {
 
 const Exportar = () => {
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
+  const [filtros, setFiltros] = useState({
+    dataInicio: "",
+    dataFim: "",
+    mes: "",
+    ano: "",
+    dia: "",
+  });
 
   const { data: recibos, isLoading } = useQuery({
-    queryKey: ["recibos"],
+    queryKey: ["recibos", filtros],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("recibos")
-        .select("id, pagador, valor, data, pdf_url, numero_recibo")
-        .order('data', { ascending: false });
+        .select("id, pagador, valor, data, pdf_url, numero_recibo");
+
+      // Aplicar filtros
+      if (filtros.dia || filtros.mes || filtros.ano) {
+        const dataFiltros = [];
+        
+        if (filtros.ano) {
+          dataFiltros.push(`extract(year from data) = ${filtros.ano}`);
+        }
+        if (filtros.mes) {
+          dataFiltros.push(`extract(month from data) = ${filtros.mes}`);
+        }
+        if (filtros.dia) {
+          dataFiltros.push(`extract(day from data) = ${filtros.dia}`);
+        }
+
+        query = query.or(dataFiltros.join(','));
+      }
+
+      const { data, error } = await query.order('data', { ascending: false });
       
       if (error) {
         console.error("Erro ao buscar recibos:", error);
@@ -125,23 +151,30 @@ const Exportar = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : !recibos || recibos.length === 0 ? (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
-                </div>
-              ) : (
-                <ListaRecibos
-                  recibos={recibos}
-                  selectedRecibos={selectedRecibos}
-                  onToggleSelect={handleToggleSelect}
-                  onDownload={handleDownload}
-                />
-              )}
+            <div className="space-y-6">
+              <FiltrosRecibos
+                filtros={filtros}
+                onFiltrosChange={setFiltros}
+              />
+              
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : !recibos || recibos.length === 0 ? (
+                  <div className="text-center p-8">
+                    <p className="text-muted-foreground">Nenhum recibo encontrado.</p>
+                  </div>
+                ) : (
+                  <ListaRecibos
+                    recibos={recibos}
+                    selectedRecibos={selectedRecibos}
+                    onToggleSelect={handleToggleSelect}
+                    onDownload={handleDownload}
+                  />
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
