@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Square, Printer, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 interface Recibo {
   id: string;
@@ -65,15 +66,27 @@ export const ListaRecibos = ({
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => recibo.pdf_url && window.open(recibo.pdf_url, "_blank")}
-                disabled={!recibo.pdf_url}
-                title="Visualizar"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!recibo.pdf_url}
+                    title="Visualizar"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh]">
+                  {recibo.pdf_url && (
+                    <iframe
+                      src={recibo.pdf_url}
+                      className="w-full h-[80vh]"
+                      title={`Recibo #${formatarNumeroRecibo(recibo.numero_recibo)}`}
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
               <Button
                 size="sm"
                 variant="outline"
