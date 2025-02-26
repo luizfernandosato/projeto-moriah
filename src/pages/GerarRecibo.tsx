@@ -362,11 +362,11 @@ const GerarRecibo = () => {
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
-              <div className="flex gap-8 items-start justify-center mb-6">
+              <div className="flex gap-8 items-start mb-6">
                 <img 
                   src="/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png"
                   alt="Logo Projeto Moriah"
-                  className="h-24 w-auto"
+                  className="h-32 w-auto"
                 />
                 <div className="text-sm space-y-2">
                   <div className="font-medium space-y-1">
