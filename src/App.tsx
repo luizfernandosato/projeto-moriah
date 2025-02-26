@@ -44,14 +44,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/embed"
-            element={
-              <ProtectedRoute>
-                <EmbedRecibo />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/embed" element={<EmbedRecibo />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
