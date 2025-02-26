@@ -8,12 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Receipt, Menu } from "lucide-react";
-import { useUser, useAuth } from "@/hooks/useAuth";
 
 export const NavBar = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const { signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b">
@@ -44,24 +41,10 @@ export const NavBar = () => {
                   <Receipt className="h-4 w-4 mr-2" />
                   Histórico
                 </DropdownMenuItem>
-                {user ? (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate('/exportar')}>
-                      <Receipt className="h-4 w-4 mr-2" />
-                      Exportar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      signOut();
-                      navigate('/');
-                    }}>
-                      Sair
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem onClick={() => navigate('/login')}>
-                    Entrar
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => navigate('/exportar')}>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Exportar
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
