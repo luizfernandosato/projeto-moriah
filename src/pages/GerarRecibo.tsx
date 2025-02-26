@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Download, Printer } from "lucide-react";
@@ -131,10 +132,51 @@ const formatarNumeroRecibo = (numero: number) => {
   return numero.toString().padStart(6, '0');
 };
 
+interface Estado {
+  sigla: string;
+  nome: string;
+}
+
+interface Cidade {
+  nome: string;
+  estado: string;
+}
+
+const estados: Estado[] = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+];
+
 const GerarRecibo = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [cidades, setCidades] = useState<Cidade[]>([]);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -142,8 +184,19 @@ const GerarRecibo = () => {
     descricao: "",
     data: new Date().toISOString().split('T')[0],
     local: "",
+    estado: "",
+    cidade: "",
     recebedor: "",
     cpfCnpjRecebedor: "",
+    enderecoRecebedor: {
+      rua: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      complemento: "",
+      cep: ""
+    },
     numeroRecibo: ""
   });
 
@@ -180,11 +233,63 @@ const GerarRecibo = () => {
         ...prev,
         [name]: numeroFormatado
       }));
+    } else if (name.startsWith('enderecoRecebedor.')) {
+      const campo = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        enderecoRecebedor: {
+          ...prev.enderecoRecebedor,
+          [campo]: value
+        }
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }));
+    }
+  };
+
+  const handleEstadoChange = async (estado: string) => {
+    setFormData(prev => ({
+      ...prev,
+      estado,
+      cidade: ""
+    }));
+
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`);
+      const data = await response.json();
+      setCidades(data.map((cidade: any) => ({
+        nome: cidade.nome,
+        estado: estado
+      })));
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+      toast.error("Erro ao carregar cidades");
+    }
+  };
+
+  const handleRecebedorEstadoChange = async (estado: string) => {
+    setFormData(prev => ({
+      ...prev,
+      enderecoRecebedor: {
+        ...prev.enderecoRecebedor,
+        estado,
+        cidade: ""
+      }
+    }));
+
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`);
+      const data = await response.json();
+      setCidades(data.map((cidade: any) => ({
+        nome: cidade.nome,
+        estado: estado
+      })));
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+      toast.error("Erro ao carregar cidades");
     }
   };
 
@@ -444,7 +549,7 @@ const GerarRecibo = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="data">Data</Label>
                     <Input
@@ -457,14 +562,45 @@ const GerarRecibo = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="local">Local</Label>
-                    <Input
-                      id="local"
-                      name="local"
-                      value={formData.local}
-                      onChange={handleInputChange}
-                      required
-                    />
+                    <Label htmlFor="estado">Estado</Label>
+                    <Select
+                      value={formData.estado}
+                      onValueChange={handleEstadoChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {estados.map((estado) => (
+                            <SelectItem key={estado.sigla} value={estado.sigla}>
+                              {estado.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade</Label>
+                    <Select
+                      value={formData.cidade}
+                      onValueChange={(cidade) => setFormData(prev => ({ ...prev, cidade }))}
+                      disabled={!formData.estado}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma cidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {cidades.map((cidade) => (
+                            <SelectItem key={cidade.nome} value={cidade.nome}>
+                              {cidade.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -491,6 +627,113 @@ const GerarRecibo = () => {
                       onChange={handleInputChange}
                       required
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.rua">Rua</Label>
+                      <Input
+                        id="enderecoRecebedor.rua"
+                        name="enderecoRecebedor.rua"
+                        value={formData.enderecoRecebedor.rua}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.numero">Número</Label>
+                      <Input
+                        id="enderecoRecebedor.numero"
+                        name="enderecoRecebedor.numero"
+                        value={formData.enderecoRecebedor.numero}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.bairro">Bairro</Label>
+                      <Input
+                        id="enderecoRecebedor.bairro"
+                        name="enderecoRecebedor.bairro"
+                        value={formData.enderecoRecebedor.bairro}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.complemento">Complemento</Label>
+                      <Input
+                        id="enderecoRecebedor.complemento"
+                        name="enderecoRecebedor.complemento"
+                        value={formData.enderecoRecebedor.complemento}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.estado">Estado</Label>
+                      <Select
+                        value={formData.enderecoRecebedor.estado}
+                        onValueChange={handleRecebedorEstadoChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {estados.map((estado) => (
+                              <SelectItem key={estado.sigla} value={estado.sigla}>
+                                {estado.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.cidade">Cidade</Label>
+                      <Select
+                        value={formData.enderecoRecebedor.cidade}
+                        onValueChange={(cidade) => setFormData(prev => ({
+                          ...prev,
+                          enderecoRecebedor: {
+                            ...prev.enderecoRecebedor,
+                            cidade
+                          }
+                        }))}
+                        disabled={!formData.enderecoRecebedor.estado}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma cidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {cidades.map((cidade) => (
+                              <SelectItem key={cidade.nome} value={cidade.nome}>
+                                {cidade.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.cep">CEP</Label>
+                      <Input
+                        id="enderecoRecebedor.cep"
+                        name="enderecoRecebedor.cep"
+                        value={formData.enderecoRecebedor.cep}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
