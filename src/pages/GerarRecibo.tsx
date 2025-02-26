@@ -316,9 +316,21 @@ const GerarRecibo = () => {
     
     doc.addImage(logoUrl, 'JPEG', x, 15, width, height);
 
-    doc.text("RECIBO", 105, 60, { align: "center" });
-    doc.setFontSize(12);
+    doc.setFontSize(8);
+    doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 15, { align: "right" });
+    doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 20, { align: "right" });
+    doc.text("Lei Municipal n° 5089/2020", 195, 25, { align: "right" });
+    doc.text("Estrada Pitanga, 1266 - Dist. Iguatemi", 195, 35, { align: "right" });
+    doc.text("Cep: 87103-089 - Maringá - PR", 195, 40, { align: "right" });
+    doc.text("Fone: (44) 3276-3569", 195, 45, { align: "right" });
+    doc.text("CNPJ: 01.725.957.0001-40", 195, 50, { align: "right" });
 
+    doc.setFontSize(10);
+    doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 60, { align: "right" });
+
+    doc.setFontSize(16);
+    doc.text("RECIBO", 105, 70, { align: "center" });
+    doc.setFontSize(12);
     doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 80, { align: "center" });
 
     doc.setFontSize(12);
@@ -328,12 +340,24 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    doc.text(`${formData.local}, ${new Date(formData.data).toLocaleDateString()}`, 15, 140);
+    doc.text(`${formData.cidade} - ${formData.estado}, ${new Date(formData.data).toLocaleDateString()}`, 15, 120);
 
-    doc.line(15, 170, 195, 170);
+    doc.line(15, 150, 195, 150);
 
-    doc.text(`${formData.recebedor}`, 105, 180, { align: "center" });
-    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 186, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`${formData.recebedor}`, 105, 160, { align: "center" });
+    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 165, { align: "center" });
+    
+    const enderecoRecebedor = [
+      `${formData.enderecoRecebedor.rua}, ${formData.enderecoRecebedor.numero}`,
+      `${formData.enderecoRecebedor.bairro}${formData.enderecoRecebedor.complemento ? ` - ${formData.enderecoRecebedor.complemento}` : ''}`,
+      `${formData.enderecoRecebedor.cidade} - ${formData.enderecoRecebedor.estado}`,
+      `CEP: ${formData.enderecoRecebedor.cep}`
+    ];
+    
+    enderecoRecebedor.forEach((linha, index) => {
+      doc.text(linha, 105, 170 + (index * 5), { align: "center" });
+    });
 
     return doc;
   };
