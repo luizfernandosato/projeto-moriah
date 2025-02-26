@@ -19,25 +19,20 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Verificar se as credenciais correspondem às esperadas
-      if (email === "projetomoriahrecibos" && password === "#Yasashi27#") {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: "projetomoriahrecibos@projetomoriahrecibos.com", // Email cadastrado no Supabase
-          password: "#Yasashi27#"
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: "projetomoriahrecibos@projetomoriahrecibos.com",
+        password: "#Yasashi27#"
+      });
 
-        if (error) {
-          toast.error("Erro ao fazer login. Verifique suas credenciais.");
-          console.error("Erro de login:", error);
-          return;
-        }
+      if (error) {
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
+        console.error("Erro de login:", error);
+        return;
+      }
 
-        if (data.user) {
-          toast.success("Login realizado com sucesso!");
-          navigate("/gerar-recibo");
-        }
-      } else {
-        toast.error("Credenciais inválidas");
+      if (data.user) {
+        toast.success("Login realizado com sucesso!");
+        navigate("/gerar-recibo");
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -62,26 +57,6 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Login</Label>
-              <Input
-                id="email"
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
             <Button
               type="submit"
               className="w-full"
