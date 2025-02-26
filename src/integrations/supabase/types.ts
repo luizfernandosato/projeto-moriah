@@ -60,27 +60,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_approvals: {
-        Row: {
-          approved_at: string | null
-          created_at: string | null
-          id: string
-          status: Database["public"]["Enums"]["user_status"] | null
-        }
-        Insert: {
-          approved_at?: string | null
-          created_at?: string | null
-          id: string
-          status?: Database["public"]["Enums"]["user_status"] | null
-        }
-        Update: {
-          approved_at?: string | null
-          created_at?: string | null
-          id?: string
-          status?: Database["public"]["Enums"]["user_status"] | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -89,7 +68,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      user_status: "pending" | "approved" | "rejected"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
