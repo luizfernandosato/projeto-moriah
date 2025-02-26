@@ -18,10 +18,16 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    if (!email || !password) {
+      toast.error("Por favor, preencha todos os campos");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: "projetomoriahrecibos@projetomoriahrecibos.com",
-        password: "#Yasashi27#"
+        email: email.includes("@") ? email : `${email}@projetomoriahrecibos.com`,
+        password: password
       });
 
       if (error) {
@@ -57,6 +63,28 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Login</Label>
+              <Input
+                id="email"
+                type="text"
+                placeholder="Digite seu login"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             <Button
               type="submit"
               className="w-full"
