@@ -44,7 +44,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/embed" element={<EmbedRecibo />} />
+          <Route 
+            path="/embed" 
+            element={<Navigate to="/login" replace />} 
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
@@ -54,4 +57,3 @@ function App() {
 }
 
 export default App;
-
