@@ -10,11 +10,14 @@ const EmbedRecibo = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Verificar sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Verificar sessão inicial e redirecionar se não estiver autenticado
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
       setLoading(false);
-    });
+    };
+
+    checkSession();
 
     // Escutar mudanças na autenticação
     const {
@@ -38,7 +41,7 @@ const EmbedRecibo = () => {
   return (
     <div className="min-h-screen bg-white">
       <main className="container mx-auto px-4 py-8">
-        {user ? <GerarRecibo /> : <Login />}
+        {!user ? <Login /> : <GerarRecibo />}
       </main>
     </div>
   );
