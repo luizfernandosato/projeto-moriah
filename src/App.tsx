@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import GerarRecibo from "@/pages/GerarRecibo";
 import Exportar from "@/pages/Exportar";
+import MinhaConta from "@/pages/MinhaConta";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
@@ -31,6 +32,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Exportar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minha-conta"
+            element={
+              <ProtectedRoute>
+                <MinhaConta />
               </ProtectedRoute>
             }
           />

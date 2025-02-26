@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Receipt, Menu, LogOut } from "lucide-react";
+import { Receipt, Menu, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -54,6 +54,10 @@ export const NavBar = () => {
                 <DropdownMenuItem onClick={() => navigate('/exportar')}>
                   <Receipt className="h-4 w-4 mr-2" />
                   Exportar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/minha-conta')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Minha Conta
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
