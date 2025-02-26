@@ -13,13 +13,6 @@ interface UserApproval {
   created_at: string;
 }
 
-// Interface para os dados retornados do banco
-interface UserApprovalData {
-  id: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-}
-
 const AdminUsers = () => {
   const [users, setUsers] = useState<UserApproval[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +34,16 @@ const AdminUsers = () => {
     try {
       const { data: usersData, error: usersError } = await supabase
         .from('user_approvals')
-        .select('id, status, created_at');
+        .select(`
+          id,
+          status,
+          created_at
+        `);
 
       if (usersError) throw usersError;
-      if (!usersData) return;
 
       const userDetails = await Promise.all(
-        usersData.map(async (user: UserApprovalData) => {
+        usersData.map(async (user) => {
           const { data: { users }, error } = await supabase.auth.admin.listUsers();
           const authUser = users.find(u => u.id === user.id);
           return {
