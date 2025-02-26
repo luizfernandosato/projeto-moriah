@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,21 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
+  const checkApprovalStatus = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_approvals')
+      .select('status')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Erro ao verificar status de aprovação:', error);
+      return null;
+    }
+
+    return data?.status;
+  };
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -27,18 +42,27 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.message.includes("Email not confirmed")) {
-          toast.error("Aguardando aprovação do administrador.");
-        } else {
-          toast.error("Erro ao fazer login. Verifique suas credenciais.");
-        }
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
         console.error("Erro de login:", error);
         return;
       }
 
       if (data.user) {
-        toast.success("Login realizado com sucesso!");
-        navigate("/gerar-recibo");
+        const status = await checkApprovalStatus(data.user.id);
+        
+        if (status === 'approved') {
+          toast.success("Login realizado com sucesso!");
+          navigate("/gerar-recibo");
+        } else if (status === 'pending') {
+          toast.error("Sua conta está aguardando aprovação do administrador.");
+          await supabase.auth.signOut();
+        } else if (status === 'rejected') {
+          toast.error("Seu acesso foi negado pelo administrador.");
+          await supabase.auth.signOut();
+        } else {
+          toast.error("Erro ao verificar status da conta.");
+          await supabase.auth.signOut();
+        }
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -59,7 +83,6 @@ const Login = () => {
     }
 
     try {
-      // Registrar o usuário com email e senha
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -67,7 +90,6 @@ const Login = () => {
           data: {
             name: name,
           },
-          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
@@ -78,7 +100,7 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Enviar email para o administrador
+        // Notificar o administrador
         const { error: functionError } = await supabase.functions.invoke('notify-admin', {
           body: {
             adminEmail: 'luizfernandosato@gmail.com',
