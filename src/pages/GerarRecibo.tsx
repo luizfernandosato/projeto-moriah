@@ -362,12 +362,25 @@ const GerarRecibo = () => {
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
-              <div className="flex justify-center mb-6">
+              <div className="flex gap-8 items-start justify-center mb-6">
                 <img 
                   src="/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png"
                   alt="Logo Projeto Moriah"
                   className="h-24 w-auto"
                 />
+                <div className="text-sm space-y-2">
+                  <div className="font-medium space-y-1">
+                    <p>Lei Federal n° 12.101 De 27/11/2009</p>
+                    <p>Lei Estadual n° 12.816 27/01/2020</p>
+                    <p>Lei Municipal n° 5089/2020</p>
+                  </div>
+                  <div className="space-y-1 mt-4">
+                    <p>Estrada Pitanga, 1266 - Dist. Iguatemi</p>
+                    <p>Cep: 87103-089 - Maringá - PR</p>
+                    <p>Fone: (44) 3276-3569</p>
+                    <p>CNPJ: 01.725.957.0001-40</p>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
