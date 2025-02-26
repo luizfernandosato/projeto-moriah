@@ -1,16 +1,16 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend("re_5bkNznz1_7qPkyP1TKG6SEcsApGt8VyYA");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +18,8 @@ serve(async (req) => {
   try {
     const { adminEmail, newUserEmail, newUserName } = await req.json();
 
-    // Enviar email para o administrador
+    console.log("Enviando email para:", adminEmail, "sobre novo usuário:", newUserEmail);
+
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Projeto Moriah <onboarding@resend.dev>',
       to: adminEmail,
@@ -35,8 +36,11 @@ serve(async (req) => {
     });
 
     if (emailError) {
+      console.error("Erro ao enviar email:", emailError);
       throw emailError;
     }
+
+    console.log("Email enviado com sucesso:", emailData);
 
     return new Response(JSON.stringify({ message: 'Email enviado com sucesso' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
