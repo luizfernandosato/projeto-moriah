@@ -9,7 +9,6 @@ import { FiltrosRecibos } from "@/components/historico/FiltrosRecibos";
 import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
 import { Loader2 } from "lucide-react";
-import { useUser } from "@/hooks/useAuth";
 
 interface Recibo {
   id: string;
@@ -21,7 +20,6 @@ interface Recibo {
 }
 
 const Historico = () => {
-  const { user } = useUser();
   const [filtros, setFiltros] = useState({
     dataInicio: "",
     dataFim: "",
@@ -33,19 +31,13 @@ const Historico = () => {
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
 
   const { data: recibos, isLoading } = useQuery({
-    queryKey: ["recibos", filtros, user?.id],
+    queryKey: ["recibos", filtros],
     queryFn: async () => {
       console.log("Buscando recibos com filtros:", filtros);
       
-      if (!user) {
-        console.log("Usuário não autenticado");
-        throw new Error("Usuário não autenticado");
-      }
-
       let query = supabase
         .from("recibos")
         .select("id, pagador, valor, data, pdf_url, numero_recibo")
-        .eq('user_id', user.id)
         .order('data', { ascending: false });
 
       // Aplicar filtros
@@ -80,7 +72,6 @@ const Historico = () => {
       console.log("Recibos encontrados:", data);
       return data as Recibo[];
     },
-    enabled: !!user,
   });
 
   const handleSelectAll = () => {
@@ -150,22 +141,6 @@ const Historico = () => {
       toast.error("Erro ao baixar o arquivo");
     }
   };
-
-  if (!user) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto py-8">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">
-                Você precisa estar logado para ver seus recibos.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
     <MainLayout>
