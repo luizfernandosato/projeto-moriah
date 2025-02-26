@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import GerarRecibo from "./pages/GerarRecibo";
 import Historico from "./pages/Historico";
+import Exportar from "./pages/Exportar";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/gerar-recibo" element={<GerarRecibo />} />
             <Route path="/historico" element={<Historico />} />
+            <Route path="/exportar" element={<Exportar />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
