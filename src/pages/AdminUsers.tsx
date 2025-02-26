@@ -41,17 +41,13 @@ const AdminUsers = () => {
     try {
       const { data: usersData, error: usersError } = await supabase
         .from('user_approvals')
-        .select<'user_approvals', UserApprovalData>(`
-          id,
-          status,
-          created_at
-        `);
+        .select('id, status, created_at');
 
       if (usersError) throw usersError;
       if (!usersData) return;
 
       const userDetails = await Promise.all(
-        usersData.map(async (user) => {
+        usersData.map(async (user: UserApprovalData) => {
           const { data: { users }, error } = await supabase.auth.admin.listUsers();
           const authUser = users.find(u => u.id === user.id);
           return {
