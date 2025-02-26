@@ -34,32 +34,32 @@ export const NavBar = () => {
             <img 
               src="/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png" 
               alt="Logo Projeto Moriah" 
-              className="h-12 w-auto"
+              className="h-8 sm:h-12 w-auto"
             />
-            <span className="text-xl font-semibold">Projeto-Moriah</span>
+            <span className="text-lg sm:text-xl font-semibold">Projeto-Moriah</span>
           </Link>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="ml-2">
                   <Menu className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate('/gerar-recibo')}>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate('/gerar-recibo')} className="py-3">
                   <Receipt className="h-4 w-4 mr-2" />
                   Gerar Recibo
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/exportar')}>
+                <DropdownMenuItem onClick={() => navigate('/exportar')} className="py-3">
                   <Receipt className="h-4 w-4 mr-2" />
                   Exportar
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/minha-conta')}>
+                <DropdownMenuItem onClick={() => navigate('/minha-conta')} className="py-3">
                   <User className="h-4 w-4 mr-2" />
                   Minha Conta
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={handleLogout} className="py-3">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sair
                 </DropdownMenuItem>

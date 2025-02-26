@@ -56,12 +56,12 @@ const MinhaConta = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <h2 className="text-2xl font-bold text-center">Minha Conta</h2>
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Card className="mt-4 sm:mt-8">
+          <CardHeader className="space-y-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-center">Minha Conta</h2>
             {userName && (
-              <p className="text-center text-gray-600 mt-2">
+              <p className="text-center text-gray-600 text-sm sm:text-base">
                 Usuário: {userName}
               </p>
             )}
@@ -69,7 +69,7 @@ const MinhaConta = () => {
           <CardContent>
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Nova Senha</Label>
+                <Label htmlFor="password" className="text-sm sm:text-base">Nova Senha</Label>
                 <Input
                   id="password"
                   type="password"
@@ -77,10 +77,11 @@ const MinhaConta = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="text-sm sm:text-base py-2"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                <Label htmlFor="confirmPassword" className="text-sm sm:text-base">Confirmar Nova Senha</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -88,11 +89,12 @@ const MinhaConta = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  className="text-sm sm:text-base py-2"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full text-sm sm:text-base py-2 h-auto"
                 disabled={loading}
               >
                 {loading ? "Atualizando..." : "Atualizar Senha"}
