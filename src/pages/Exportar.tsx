@@ -39,27 +39,29 @@ const Exportar = () => {
   const [selectedRecibos, setSelectedRecibos] = useState<string[]>([]);
   const [mesSelecionado, setMesSelecionado] = useState<string>("");
 
+  const fetchRecibos = async () => {
+    let query = supabase
+      .from("recibos")
+      .select("id, pagador, valor, data, pdf_url, numero_recibo");
+
+    if (mesSelecionado) {
+      query = query.eq('EXTRACT(month FROM data)::integer', parseInt(mesSelecionado));
+    }
+
+    const { data, error } = await query.order('data', { ascending: false });
+    
+    if (error) {
+      console.error("Erro ao buscar recibos:", error);
+      toast.error("Erro ao carregar recibos");
+      throw error;
+    }
+    
+    return data as Recibo[];
+  };
+
   const { data: recibos, isLoading } = useQuery({
     queryKey: ["recibos", mesSelecionado],
-    queryFn: async () => {
-      let query = supabase
-        .from("recibos")
-        .select("id, pagador, valor, data, pdf_url, numero_recibo");
-
-      if (mesSelecionado) {
-        query = query.eq('EXTRACT(month FROM data)', parseInt(mesSelecionado));
-      }
-
-      const { data, error } = await query.order('data', { ascending: false });
-      
-      if (error) {
-        console.error("Erro ao buscar recibos:", error);
-        toast.error("Erro ao carregar recibos");
-        throw error;
-      }
-      
-      return data as Recibo[];
-    },
+    queryFn: fetchRecibos
   });
 
   const handleSelectAll = () => {
