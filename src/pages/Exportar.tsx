@@ -8,6 +8,7 @@ import { ListaRecibos } from "@/components/historico/ListaRecibos";
 import { AcoesRecibos } from "@/components/historico/AcoesRecibos";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { PDFDocument } from 'pdf-lib';
 
 interface Recibo {
   id: string;
@@ -57,20 +58,52 @@ const Exportar = () => {
     );
   };
 
-  const handlePrintSelected = () => {
+  const handlePrintSelected = async () => {
     if (selectedRecibos.length === 0) {
       toast.error("Selecione pelo menos um recibo");
       return;
     }
 
-    const selectedPdfs = recibos
-      ?.filter(r => selectedRecibos.includes(r.id))
-      .map(r => r.pdf_url)
-      .filter(Boolean);
+    try {
+      const selectedPdfs = recibos
+        ?.filter(r => selectedRecibos.includes(r.id))
+        .map(r => r.pdf_url)
+        .filter((url): url is string => url !== null);
 
-    selectedPdfs?.forEach(url => {
-      if (url) window.open(url, "_blank");
-    });
+      if (!selectedPdfs || selectedPdfs.length === 0) {
+        toast.error("Nenhum PDF disponível para impressão");
+        return;
+      }
+
+      // Se for apenas um PDF, abre direto
+      if (selectedPdfs.length === 1) {
+        window.open(selectedPdfs[0], "_blank");
+        return;
+      }
+
+      // Para múltiplos PDFs, mescla em um único arquivo
+      const mergedPdf = await PDFDocument.create();
+
+      for (const url of selectedPdfs) {
+        const pdfBytes = await fetch(url).then(res => res.arrayBuffer());
+        const pdf = await PDFDocument.load(pdfBytes);
+        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        pages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      window.open(url, '_blank');
+      
+      // Limpa o URL criado após um tempo
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      
+    } catch (error) {
+      console.error('Erro ao mesclar PDFs:', error);
+      toast.error("Erro ao preparar PDFs para impressão");
+    }
   };
 
   const handleDownloadSelected = async () => {
