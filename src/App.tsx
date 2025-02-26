@@ -8,6 +8,7 @@ import MinhaConta from "@/pages/MinhaConta";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import EmbedRecibo from "@/pages/EmbedRecibo";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MinhaConta />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/embed"
+            element={
+              <ProtectedRoute>
+                <EmbedRecibo />
               </ProtectedRoute>
             }
           />
