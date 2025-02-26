@@ -1,37 +1,37 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!email || !password) {
-      toast.error("Por favor, preencha todos os campos");
-      setLoading(false);
-      return;
-    }
-
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.includes("@") ? email : `${email}@projetomoriahrecibos.com`,
-        password: password
+        email,
+        password,
       });
 
       if (error) {
-        toast.error("Erro ao fazer login. Verifique suas credenciais.");
+        if (error.message.includes("Email not confirmed")) {
+          toast.error("Aguardando aprovação do administrador.");
+        } else {
+          toast.error("Erro ao fazer login. Verifique suas credenciais.");
+        }
         console.error("Erro de login:", error);
         return;
       }
@@ -48,6 +48,62 @@ const Login = () => {
     }
   };
 
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (!email || !password || !name) {
+      toast.error("Por favor, preencha todos os campos");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Registrar o usuário com email e senha
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
+      });
+
+      if (error) {
+        toast.error("Erro ao registrar usuário");
+        console.error("Erro de registro:", error);
+        return;
+      }
+
+      if (data.user) {
+        // Enviar email para o administrador
+        const { error: functionError } = await supabase.functions.invoke('notify-admin', {
+          body: {
+            adminEmail: 'luizfernandosato@gmail.com',
+            newUserEmail: email,
+            newUserName: name,
+          }
+        });
+
+        if (functionError) {
+          console.error("Erro ao notificar administrador:", functionError);
+        }
+
+        toast.success("Registro realizado com sucesso! Aguarde a aprovação do administrador.");
+        setEmail("");
+        setPassword("");
+        setName("");
+      }
+    } catch (error) {
+      console.error("Erro ao registrar:", error);
+      toast.error("Erro ao registrar usuário");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
@@ -58,41 +114,93 @@ const Login = () => {
               alt="Logo Projeto Moriah" 
               className="h-20 w-auto mx-auto mb-4"
             />
-            <h1 className="text-2xl font-bold">Projeto Moriah - Login</h1>
+            <h1 className="text-2xl font-bold">Projeto Moriah</h1>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Login</Label>
-              <Input
-                id="email"
-                type="text"
-                placeholder="Digite seu login"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Digite sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Registrar</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="loginEmail">Email</Label>
+                  <Input
+                    id="loginEmail"
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="loginPassword">Senha</Label>
+                  <Input
+                    id="loginPassword"
+                    type="password"
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="register">
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="registerName">Nome</Label>
+                  <Input
+                    id="registerName"
+                    type="text"
+                    placeholder="Digite seu nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="registerEmail">Email</Label>
+                  <Input
+                    id="registerEmail"
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="registerPassword">Senha</Label>
+                  <Input
+                    id="registerPassword"
+                    type="password"
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? "Registrando..." : "Registrar"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
