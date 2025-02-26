@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, Square, Printer, Download } from "lucide-react";
+import { CheckSquare, Square, Printer, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
 
 interface Recibo {
@@ -70,6 +70,16 @@ export const ListaRecibos = ({
                 variant="outline"
                 onClick={() => recibo.pdf_url && window.open(recibo.pdf_url, "_blank")}
                 disabled={!recibo.pdf_url}
+                title="Visualizar"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => recibo.pdf_url && window.open(recibo.pdf_url, "_blank")}
+                disabled={!recibo.pdf_url}
+                title="Imprimir"
               >
                 <Printer className="h-4 w-4" />
               </Button>
@@ -78,6 +88,7 @@ export const ListaRecibos = ({
                 variant="outline"
                 onClick={() => recibo.pdf_url && onDownload(recibo.pdf_url)}
                 disabled={!recibo.pdf_url}
+                title="Download"
               >
                 <Download className="h-4 w-4" />
               </Button>
