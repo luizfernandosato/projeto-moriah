@@ -37,10 +37,6 @@ export const NavBar = () => {
                   <Receipt className="h-4 w-4 mr-2" />
                   Gerar Recibo
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/historico')}>
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Histórico
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/exportar')}>
                   <Receipt className="h-4 w-4 mr-2" />
                   Exportar

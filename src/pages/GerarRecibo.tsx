@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Download, Printer, Upload } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -135,8 +134,7 @@ const formatarNumeroRecibo = (numero: number) => {
 const GerarRecibo = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -148,7 +146,10 @@ const GerarRecibo = () => {
     cpfCnpjRecebedor: "",
     numeroRecibo: ""
   });
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUltimoNumeroRecibo();
+  }, []);
 
   const fetchUltimoNumeroRecibo = async () => {
     try {
@@ -171,10 +172,6 @@ const GerarRecibo = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUltimoNumeroRecibo();
-  }, []);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'valor') {
@@ -191,30 +188,6 @@ const GerarRecibo = () => {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const fileName = `logos/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('logos')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('logos')
-        .getPublicUrl(fileName);
-
-      setLogoUrl(publicUrl);
-      toast.success("Logo carregada com sucesso!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar logo");
-    }
-  };
-
   const generatePDF = () => {
     const doc = new jsPDF();
     const valorNumerico = parseFloat(formData.valor.replace(/\./g, '').replace(',', '.')) / 100;
@@ -223,21 +196,20 @@ const GerarRecibo = () => {
     doc.setFont("helvetica");
     doc.setFontSize(16);
 
-    if (logoUrl) {
-      const img = new Image();
-      img.src = logoUrl;
-      
-      const maxWidth = 100;  // Largura máxima em mm
-      const maxHeight = 30;  // Altura máxima em mm
-      
-      const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-      const width = img.width * ratio;
-      const height = img.height * ratio;
-      
-      const x = (210 - width) / 2; // 210 é a largura da página A4 em mm
-      
-      doc.addImage(logoUrl, 'JPEG', x, 15, width, height);
-    }
+    const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
+    const img = new Image();
+    img.src = logoUrl;
+    
+    const maxWidth = 100;  // Largura máxima em mm
+    const maxHeight = 30;  // Altura máxima em mm
+    
+    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+    const width = img.width * ratio;
+    const height = img.height * ratio;
+    
+    const x = (210 - width) / 2; // 210 é a largura da página A4 em mm
+    
+    doc.addImage(logoUrl, 'JPEG', x, 15, width, height);
 
     doc.text("RECIBO", 105, 60, { align: "center" });
     doc.setFontSize(12);
@@ -390,28 +362,12 @@ const GerarRecibo = () => {
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Logo da Empresa</Label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleLogoUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {logoUrl ? 'Trocar Logo' : 'Carregar Logo'}
-                  </Button>
-                  {logoUrl && (
-                    <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
-                  )}
-                </div>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png"
+                  alt="Logo Projeto Moriah"
+                  className="h-24 w-auto"
+                />
               </div>
 
               <div className="space-y-4">
