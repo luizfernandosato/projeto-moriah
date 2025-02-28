@@ -116,17 +116,44 @@ const valorPorExtenso = (valor: number): string => {
   return resultado;
 };
 
+// Esta função agora preserva o valor original conforme digitado
 const formatarNumero = (valor: string) => {
-  const numero = valor.replace(/\D/g, '');
+  // Remove tudo que não for dígito, ponto ou vírgula
+  let numeroLimpo = valor.replace(/[^\d.,]/g, '');
   
-  if (numero === '') return '';
+  // Garante que só há uma vírgula
+  if (numeroLimpo.indexOf(',') !== numeroLimpo.lastIndexOf(',')) {
+    numeroLimpo = numeroLimpo.replace(/,/g, function(match, index, original) {
+      return (index === original.lastIndexOf(',')) ? match : '';
+    });
+  }
   
-  const valorNumerico = parseInt(numero) / 100;
+  // Substitui pontos por nada (para milhares)
+  numeroLimpo = numeroLimpo.replace(/\./g, '');
+  
+  // Substitui vírgula por ponto para o formato decimal
+  numeroLimpo = numeroLimpo.replace(',', '.');
+  
+  // Se não há valor, retorna vazio
+  if (numeroLimpo === '') return '';
+
+  // Converte para número e formata para exibição
+  const valorNumerico = parseFloat(numeroLimpo);
   
   return valorNumerico.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+// Função para converter o valor de exibição para o formato numérico real
+const converterParaNumero = (valorFormatado: string): number => {
+  if (!valorFormatado) return 0;
+  
+  // Remove pontos de milhar e substitui vírgula por ponto
+  const valorNumerico = valorFormatado.replace(/\./g, '').replace(',', '.');
+  
+  return parseFloat(valorNumerico);
 };
 
 const formatarNumeroRecibo = (numero: number) => {
@@ -319,7 +346,7 @@ const GerarRecibo = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '').replace(',', '.')) / 100;
+    const valorNumerico = converterParaNumero(formData.valor);
     const valorExtenso = valorPorExtenso(valorNumerico);
     const dataCompleta = formatarDataCompleta(formData.data);
 
@@ -393,7 +420,7 @@ const GerarRecibo = () => {
       return;
     }
 
-    const valorNumerico = parseFloat(formData.valor.replace(/\./g, '')) / 100;
+    const valorNumerico = converterParaNumero(formData.valor);
 
     const { error } = await supabase.from("recibos").insert({
       user_id: user.id,
@@ -579,7 +606,7 @@ const GerarRecibo = () => {
                   <div className="space-y-2">
                     <Label>Valor por Extenso</Label>
                     <Input
-                      value={formData.valor ? valorPorExtenso(parseFloat(formData.valor.replace(/\./g, '').replace(',', '.'))) : ""}
+                      value={formData.valor ? valorPorExtenso(converterParaNumero(formData.valor)) : ""}
                       readOnly
                       className="bg-gray-50"
                     />
