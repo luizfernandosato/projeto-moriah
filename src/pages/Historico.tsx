@@ -15,6 +15,7 @@ interface Recibo {
   pagador: string;
   valor: number;
   data: string;
+  created_at: string;
   pdf_url: string | null;
   numero_recibo: number;
 }
@@ -37,8 +38,8 @@ const Historico = () => {
       
       let query = supabase
         .from("recibos")
-        .select("id, pagador, valor, data, pdf_url, numero_recibo")
-        .order('data', { ascending: false });
+        .select("id, pagador, valor, data, created_at, pdf_url, numero_recibo")
+        .order('created_at', { ascending: false });
 
       // Aplicar filtros
       if (filtros.dataInicio) {
