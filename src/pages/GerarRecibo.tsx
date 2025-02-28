@@ -354,6 +354,7 @@ const GerarRecibo = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF();
+    // Aqui está a correção: use o valor do formulário diretamente no PDF
     const valorNumerico = converterParaNumero(formData.valor);
     const valorExtenso = valorPorExtenso(valorNumerico);
     const dataCompleta = formatarDataCompleta(formData.data);
@@ -362,17 +363,9 @@ const GerarRecibo = () => {
     doc.setFontSize(16);
 
     const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
-    const img = new Image();
-    img.src = logoUrl;
     
-    const maxWidth = 100;  // Largura máxima em mm
-    const maxHeight = 30;  // Altura máxima em mm
-    
-    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-    const width = img.width * ratio;
-    const height = img.height * ratio;
-    
-    doc.addImage(logoUrl, 'JPEG', 15, 15, width, height);
+    // Corrigindo o tamanho da logo
+    doc.addImage(logoUrl, 'JPEG', 15, 15, 50, 15);
 
     doc.setFontSize(8);
     doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 15, { align: "right" });
@@ -389,7 +382,9 @@ const GerarRecibo = () => {
     doc.setFontSize(16);
     doc.text("RECIBO DE", 105, 70, { align: "center" });
     doc.setFontSize(12);
-    doc.text(`R$ ${valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 105, 80, { align: "center" });
+    
+    // Exibindo o valor formatado como está no formulário
+    doc.text(`R$ ${formData.valor}`, 105, 80, { align: "center" });
 
     doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
