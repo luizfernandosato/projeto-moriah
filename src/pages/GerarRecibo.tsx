@@ -530,13 +530,13 @@ const GerarRecibo = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-8">
-        <Card className="max-w-4xl mx-auto">
+      <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+        <Card className="max-w-4xl mx-auto shadow-md">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Gerar Recibo</h2>
-              <div className="flex gap-2">
-                <div className="text-right">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-xl sm:text-2xl font-bold">Gerar Recibo</h2>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="text-right w-full sm:w-auto">
                   <Label>Nº do Recibo</Label>
                   <Input
                     value={formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}
@@ -545,7 +545,7 @@ const GerarRecibo = () => {
                   />
                 </div>
                 {pdfUrl && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-4 sm:mt-auto">
                     <Button
                       size="sm"
                       variant="outline"
@@ -568,19 +568,19 @@ const GerarRecibo = () => {
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
-              <div className="flex gap-8 items-start justify-between mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start justify-between mb-4 sm:mb-6">
                 <img 
                   src="/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png"
                   alt="Logo Projeto Moriah"
-                  className="h-32 w-auto"
+                  className="h-20 sm:h-32 w-auto mx-auto sm:mx-0"
                 />
-                <div className="text-sm space-y-2 text-right">
+                <div className="text-sm space-y-1 text-right w-full sm:w-auto">
                   <div className="font-medium space-y-1">
                     <p>Lei Federal n° 12.101 De 27/11/2009</p>
                     <p>Lei Estadual n° 12.816 27/01/2020</p>
                     <p>Lei Municipal n° 5089/2020</p>
                   </div>
-                  <div className="space-y-1 mt-4">
+                  <div className="space-y-1 mt-2 sm:mt-4">
                     <p>Estrada Pitanga, 1266 - Dist. Iguatemi</p>
                     <p>Cep: 87103-089 - Maringá - PR</p>
                     <p>Fone: (44) 3276-3569</p>
@@ -650,7 +650,7 @@ const GerarRecibo = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="data">Data</Label>
                     <Input
@@ -732,7 +732,7 @@ const GerarRecibo = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="enderecoRecebedor.rua">Rua</Label>
                       <Input
@@ -755,7 +755,7 @@ const GerarRecibo = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="enderecoRecebedor.bairro">Bairro</Label>
                       <Input
@@ -777,7 +777,7 @@ const GerarRecibo = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="enderecoRecebedor.estado">Estado</Label>
                       <Select
@@ -840,18 +840,20 @@ const GerarRecibo = () => {
               </div>
             </CardContent>
 
-            <CardFooter className="flex justify-end space-x-4">
+            <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
               <Button 
                 type="button" 
                 variant="outline"
                 onClick={() => navigate("/")}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
               <Button 
                 type="submit"
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 {isLoading ? (
                   <>
