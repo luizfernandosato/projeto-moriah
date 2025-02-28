@@ -28,67 +28,95 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // 1. Fazer login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        toast.error("Erro ao fazer login. Verifique suas credenciais.");
         console.error("Erro de login:", error);
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
+        setLoading(false);
         return;
       }
 
-      if (data.user) {
-        try {
-          // Verificar se o usuário está aprovado - usando o service role para ultrapassar RLS
-          const { data: approvalData, error: approvalError } = await supabase
-            .from('user_approvals')
-            .select('status')
-            .eq('id', data.user.id)
-            .single();
-            
-          if (approvalError) {
-            console.error("Erro ao verificar aprovação:", approvalError);
-            toast.error("Erro ao verificar status da sua conta. Tente novamente mais tarde.");
-            return;
-          }
+      if (!data.user) {
+        toast.error("Usuário não encontrado");
+        setLoading(false);
+        return;
+      }
 
-          if (!approvalData) {
-            // Se não existir um registro na tabela user_approvals, criar um
-            const { error: insertError } = await supabase
-              .from('user_approvals')
-              .insert({ id: data.user.id, status: 'pending' });
-              
-            if (insertError) {
-              console.error("Erro ao criar registro de aprovação:", insertError);
-              toast.error("Erro ao configurar sua conta. Contate o administrador.");
-              await supabase.auth.signOut();
-              return;
-            }
-            
-            toast.error("Sua conta ainda não foi aprovada pelo administrador.");
-            await supabase.auth.signOut();
-            return;
-          }
+      console.log("Login bem-sucedido para o usuário ID:", data.user.id);
 
-          if (approvalData?.status !== 'approved') {
-            toast.error("Sua conta ainda não foi aprovada pelo administrador.");
-            await supabase.auth.signOut();
-            return;
-          }
-
-          toast.success("Login realizado com sucesso!");
-          navigate("/gerar-recibo");
-        } catch (error) {
-          console.error("Erro ao verificar status da conta:", error);
-          toast.error("Erro ao verificar status da sua conta");
+      try {
+        // 2. Verificar se o usuário está aprovado
+        console.log("Verificando aprovação para o usuário:", data.user.id);
+        
+        // Método 1: Consulta direta
+        const { data: approvalData, error: approvalError } = await supabase
+          .from('user_approvals')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro se não encontrar
+        
+        console.log("Resultado da consulta de aprovação:", { approvalData, approvalError });
+        
+        if (approvalError) {
+          console.error("Erro ao verificar aprovação:", approvalError);
+          toast.error("Não foi possível verificar o status da sua conta");
           await supabase.auth.signOut();
+          setLoading(false);
+          return;
         }
+
+        // Se não existir um registro, verificar se o usuário precisa ser aprovado
+        if (!approvalData) {
+          console.log("Registro de aprovação não encontrado, criando um novo");
+          
+          // Criando um registro de aprovação pendente
+          const { error: insertError } = await supabase
+            .from('user_approvals')
+            .insert([
+              { id: data.user.id, status: 'pending' }
+            ]);
+          
+          if (insertError) {
+            console.error("Erro ao criar registro de aprovação:", insertError);
+            toast.error("Não foi possível configurar sua conta");
+            await supabase.auth.signOut();
+            setLoading(false);
+            return;
+          }
+          
+          toast.error("Sua conta está pendente de aprovação pelo administrador");
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+        
+        // Verificar status da aprovação
+        console.log("Status de aprovação:", approvalData.status);
+        
+        if (approvalData.status !== 'approved') {
+          toast.error("Sua conta ainda não foi aprovada pelo administrador");
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+        
+        // Login bem-sucedido e usuário aprovado
+        console.log("Usuário aprovado, redirecionando...");
+        toast.success("Login realizado com sucesso!");
+        navigate("/gerar-recibo");
+      } catch (error) {
+        console.error("Erro ao processar verificação de aprovação:", error);
+        toast.error("Erro ao verificar status da sua conta");
+        await supabase.auth.signOut();
       }
     } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      toast.error("Erro ao fazer login");
+      console.error("Erro geral no login:", error);
+      toast.error("Ocorreu um erro durante o login");
     } finally {
       setLoading(false);
     }
