@@ -33,16 +33,34 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.message.includes("Email not confirmed")) {
-          toast.error("Aguardando aprovação do administrador.");
-        } else {
-          toast.error("Erro ao fazer login. Verifique suas credenciais.");
-        }
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
         console.error("Erro de login:", error);
         return;
       }
 
       if (data.user) {
+        // Verificar se o usuário está aprovado
+        const { data: approvalData, error: approvalError } = await supabase
+          .from('user_approvals')
+          .select('approved')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (approvalError) {
+          console.error("Erro ao verificar aprovação:", approvalError);
+          toast.error("Erro ao verificar status da sua conta");
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+
+        if (!approvalData?.approved) {
+          toast.error("Sua conta ainda não foi aprovada pelo administrador.");
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+
         toast.success("Login realizado com sucesso!");
         navigate("/gerar-recibo");
       }
@@ -65,30 +83,67 @@ const Login = () => {
     }
 
     try {
-      const response = await supabase.functions.invoke('solicitar-acesso', {
-        body: {
-          nome: nome,
-          email: emailSolicitacao,
-          setor: setor,
+      // Registrar o usuário no Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: emailSolicitacao,
+        password: password || generateRandomPassword(), // Gerar senha aleatória se não fornecida
+        options: {
+          data: {
+            nome: nome,
+            setor: setor,
+          },
         }
       });
 
-      if (response.error) {
-        toast.error("Erro ao enviar solicitação");
-        console.error("Erro ao solicitar acesso:", response.error);
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast.error("Este email já está registrado no sistema.");
+        } else {
+          toast.error("Erro ao criar conta: " + authError.message);
+        }
+        console.error("Erro ao solicitar acesso:", authError);
         return;
       }
 
-      toast.success("Solicitação enviada com sucesso! O administrador entrará em contato.");
+      // Atualizar a tabela user_approvals (já é criada pelo trigger)
+      toast.success("Solicitação enviada com sucesso! O administrador aprovará seu acesso em breve.");
+      
+      // Notificar o administrador
+      try {
+        await supabase.functions.invoke('notify-admin', {
+          body: {
+            nome: nome,
+            email: emailSolicitacao,
+            setor: setor,
+          }
+        });
+      } catch (notifyError) {
+        console.error("Erro ao notificar administrador:", notifyError);
+        // Não falhar o processo por causa deste erro
+      }
+
       setNome("");
       setEmailSolicitacao("");
       setSetor("");
+      setPassword("");
     } catch (error) {
       console.error("Erro ao solicitar acesso:", error);
       toast.error("Erro ao enviar solicitação");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Função para gerar senha aleatória
+  const generateRandomPassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
+    return password;
   };
 
   return (
@@ -176,6 +231,17 @@ const Login = () => {
                       placeholder="Em qual setor você trabalha"
                       value={setor}
                       onChange={(e) => setSetor(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Crie uma senha segura"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                     />
                   </div>
