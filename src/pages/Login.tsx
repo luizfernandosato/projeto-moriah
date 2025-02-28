@@ -42,7 +42,7 @@ const Login = () => {
         // Verificar se o usuário está aprovado
         const { data: approvalData, error: approvalError } = await supabase
           .from('user_approvals')
-          .select('approved')
+          .select('status')
           .eq('id', data.user.id)
           .single();
           
@@ -54,7 +54,7 @@ const Login = () => {
           return;
         }
 
-        if (!approvalData?.approved) {
+        if (approvalData?.status !== 'approved') {
           toast.error("Sua conta ainda não foi aprovada pelo administrador.");
           await supabase.auth.signOut();
           setLoading(false);
