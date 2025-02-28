@@ -380,8 +380,9 @@ const GerarRecibo = () => {
     
     const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
     
-    // Ajustando a logo para ficar alinhada com o texto à direita
-    doc.addImage(logoUrl, 'JPEG', 15, 10, 40, 12);
+    // Ajustando a logo para ter a mesma altura das 7 linhas de texto à direita
+    // A altura do texto vai de 10 a 45 (7 linhas), então ajustamos a logo para essa altura
+    doc.addImage(logoUrl, 'JPEG', 15, 10, 45, 35);
 
     // Informações à direita do cabeçalho
     doc.setFontSize(8);
