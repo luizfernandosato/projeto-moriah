@@ -12,9 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  // Estado para login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  
+  // Estado para solicitação de acesso
+  const [nome, setNome] = useState("");
+  const [emailSolicitacao, setEmailSolicitacao] = useState("");
+  const [setor, setSetor] = useState("");
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,57 +53,38 @@ const Login = () => {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSolicitarAcesso = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!email || !password || !name) {
+    if (!nome || !emailSolicitacao || !setor) {
       toast.error("Por favor, preencha todos os campos");
       setLoading(false);
       return;
     }
 
     try {
-      // Registrar o usuário com email e senha
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          },
-          emailRedirectTo: `${window.location.origin}/login`,
-        },
+      const response = await supabase.functions.invoke('solicitar-acesso', {
+        body: {
+          nome: nome,
+          email: emailSolicitacao,
+          setor: setor,
+        }
       });
 
-      if (error) {
-        toast.error("Erro ao registrar usuário");
-        console.error("Erro de registro:", error);
+      if (response.error) {
+        toast.error("Erro ao enviar solicitação");
+        console.error("Erro ao solicitar acesso:", response.error);
         return;
       }
 
-      if (data.user) {
-        // Enviar email para o administrador
-        const { error: functionError } = await supabase.functions.invoke('notify-admin', {
-          body: {
-            adminEmail: 'luizfernandosato@gmail.com',
-            newUserEmail: email,
-            newUserName: name,
-          }
-        });
-
-        if (functionError) {
-          console.error("Erro ao notificar administrador:", functionError);
-        }
-
-        toast.success("Registro realizado com sucesso! Aguarde a aprovação do administrador.");
-        setEmail("");
-        setPassword("");
-        setName("");
-      }
+      toast.success("Solicitação enviada com sucesso! O administrador entrará em contato.");
+      setNome("");
+      setEmailSolicitacao("");
+      setSetor("");
     } catch (error) {
-      console.error("Erro ao registrar:", error);
-      toast.error("Erro ao registrar usuário");
+      console.error("Erro ao solicitar acesso:", error);
+      toast.error("Erro ao enviar solicitação");
     } finally {
       setLoading(false);
     }
@@ -121,7 +107,7 @@ const Login = () => {
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Registrar</TabsTrigger>
+              <TabsTrigger value="solicitar">Solicitar Acesso</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
@@ -156,38 +142,38 @@ const Login = () => {
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
+            <TabsContent value="solicitar">
+              <form onSubmit={handleSolicitarAcesso} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="registerName">Nome</Label>
+                  <Label htmlFor="nome">Nome Completo</Label>
                   <Input
-                    id="registerName"
+                    id="nome"
                     type="text"
-                    placeholder="Digite seu nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Digite seu nome completo"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registerEmail">Email</Label>
+                  <Label htmlFor="emailSolicitacao">Email</Label>
                   <Input
-                    id="registerEmail"
+                    id="emailSolicitacao"
                     type="email"
                     placeholder="Digite seu email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={emailSolicitacao}
+                    onChange={(e) => setEmailSolicitacao(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registerPassword">Senha</Label>
+                  <Label htmlFor="setor">Setor</Label>
                   <Input
-                    id="registerPassword"
-                    type="password"
-                    placeholder="Digite sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="setor"
+                    type="text"
+                    placeholder="Em qual setor você trabalha"
+                    value={setor}
+                    onChange={(e) => setSetor(e.target.value)}
                     required
                   />
                 </div>
@@ -196,7 +182,7 @@ const Login = () => {
                   className="w-full"
                   disabled={loading}
                 >
-                  {loading ? "Registrando..." : "Registrar"}
+                  {loading ? "Enviando..." : "Solicitar Acesso"}
                 </Button>
               </form>
             </TabsContent>
