@@ -32,6 +32,20 @@ const formatarNumeroRecibo = (numero: number) => {
   return numero.toString().padStart(6, '0');
 };
 
+const formatarDataCompleta = (dataString: string) => {
+  const data = new Date(dataString);
+  
+  const dia = data.getDate();
+  const meses = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+  const mes = meses[data.getMonth()];
+  const ano = data.getFullYear();
+  
+  return `${dia} de ${mes} de ${ano}`;
+};
+
 export const ListaRecibos = ({
   recibos,
   selectedRecibos,

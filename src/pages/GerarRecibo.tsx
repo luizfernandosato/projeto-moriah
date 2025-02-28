@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -130,6 +131,29 @@ const formatarNumero = (valor: string) => {
 
 const formatarNumeroRecibo = (numero: number) => {
   return numero.toString().padStart(6, '0');
+};
+
+const formatarDataNumerica = (dataString: string) => {
+  const data = new Date(dataString);
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  
+  return `${dia}/${mes}/${ano}`;
+};
+
+const formatarDataCompleta = (dataString: string) => {
+  const data = new Date(dataString);
+  
+  const dia = data.getDate();
+  const meses = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+  const mes = meses[data.getMonth()];
+  const ano = data.getFullYear();
+  
+  return `${dia} de ${mes} de ${ano}`;
 };
 
 interface Estado {
@@ -297,6 +321,8 @@ const GerarRecibo = () => {
     const doc = new jsPDF();
     const valorNumerico = parseFloat(formData.valor.replace(/\./g, '').replace(',', '.')) / 100;
     const valorExtenso = valorPorExtenso(valorNumerico);
+    const dataNumerica = formatarDataNumerica(formData.data);
+    const dataCompleta = formatarDataCompleta(formData.data);
 
     doc.setFont("helvetica");
     doc.setFontSize(16);
@@ -338,13 +364,15 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    doc.text(`${formData.cidade} - ${formData.estado}, ${new Date(formData.data).toLocaleDateString()}`, 15, 120);
+    // Formatos de data solicitados
+    doc.text(`Dia/Mês/Ano: ${dataNumerica}`, 15, 120);
+    doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 130);
 
-    doc.line(15, 150, 195, 150);
+    doc.line(15, 160, 195, 160);
 
     doc.setFontSize(10);
-    doc.text(`${formData.recebedor}`, 105, 160, { align: "center" });
-    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 165, { align: "center" });
+    doc.text(`${formData.recebedor}`, 105, 170, { align: "center" });
+    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 175, { align: "center" });
     
     const enderecoRecebedor = [
       `${formData.enderecoRecebedor.rua}, ${formData.enderecoRecebedor.numero}`,
@@ -354,7 +382,7 @@ const GerarRecibo = () => {
     ];
     
     enderecoRecebedor.forEach((linha, index) => {
-      doc.text(linha, 105, 170 + (index * 5), { align: "center" });
+      doc.text(linha, 105, 180 + (index * 5), { align: "center" });
     });
 
     return doc;
