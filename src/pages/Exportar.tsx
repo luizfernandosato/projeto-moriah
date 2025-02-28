@@ -81,6 +81,8 @@ const Exportar = () => {
         return;
       }
 
+      toast.loading("Combinando PDFs para impressão...");
+
       // Para múltiplos PDFs, mescla em um único arquivo
       const mergedPdf = await PDFDocument.create();
 
@@ -96,6 +98,7 @@ const Exportar = () => {
       const url = URL.createObjectURL(blob);
       
       window.open(url, '_blank');
+      toast.dismiss();
       
       // Limpa o URL criado após um tempo
       setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -112,13 +115,53 @@ const Exportar = () => {
       return;
     }
 
-    const selectedPdfs = recibos
-      ?.filter(r => selectedRecibos.includes(r.id))
-      .map(r => r.pdf_url)
-      .filter(Boolean);
+    try {
+      const selectedPdfs = recibos
+        ?.filter(r => selectedRecibos.includes(r.id))
+        .map(r => r.pdf_url)
+        .filter((url): url is string => url !== null);
 
-    for (const url of selectedPdfs || []) {
-      if (url) await handleDownload(url);
+      if (!selectedPdfs || selectedPdfs.length === 0) {
+        toast.error("Nenhum PDF disponível para download");
+        return;
+      }
+
+      // Se for apenas um PDF, baixa direto
+      if (selectedPdfs.length === 1) {
+        await handleDownload(selectedPdfs[0]);
+        return;
+      }
+
+      toast.loading("Combinando PDFs para download...");
+
+      // Para múltiplos PDFs, mescla em um único arquivo
+      const mergedPdf = await PDFDocument.create();
+
+      for (const url of selectedPdfs) {
+        const pdfBytes = await fetch(url).then(res => res.arrayBuffer());
+        const pdf = await PDFDocument.load(pdfBytes);
+        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        pages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `recibos_combinados_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      URL.revokeObjectURL(downloadUrl);
+      toast.dismiss();
+      toast.success("Download concluído!");
+      
+    } catch (error) {
+      console.error("Erro ao combinar PDFs para download:", error);
+      toast.error("Erro ao preparar PDFs para download");
     }
   };
 
