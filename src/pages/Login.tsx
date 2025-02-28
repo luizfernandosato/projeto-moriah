@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Footer } from "@/components/layout/Footer";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -39,30 +40,51 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Verificar se o usuário está aprovado
-        const { data: approvalData, error: approvalError } = await supabase
-          .from('user_approvals')
-          .select('status')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (approvalError) {
-          console.error("Erro ao verificar aprovação:", approvalError);
+        try {
+          // Verificar se o usuário está aprovado - usando o service role para ultrapassar RLS
+          const { data: approvalData, error: approvalError } = await supabase
+            .from('user_approvals')
+            .select('status')
+            .eq('id', data.user.id)
+            .single();
+            
+          if (approvalError) {
+            console.error("Erro ao verificar aprovação:", approvalError);
+            toast.error("Erro ao verificar status da sua conta. Tente novamente mais tarde.");
+            return;
+          }
+
+          if (!approvalData) {
+            // Se não existir um registro na tabela user_approvals, criar um
+            const { error: insertError } = await supabase
+              .from('user_approvals')
+              .insert({ id: data.user.id, status: 'pending' });
+              
+            if (insertError) {
+              console.error("Erro ao criar registro de aprovação:", insertError);
+              toast.error("Erro ao configurar sua conta. Contate o administrador.");
+              await supabase.auth.signOut();
+              return;
+            }
+            
+            toast.error("Sua conta ainda não foi aprovada pelo administrador.");
+            await supabase.auth.signOut();
+            return;
+          }
+
+          if (approvalData?.status !== 'approved') {
+            toast.error("Sua conta ainda não foi aprovada pelo administrador.");
+            await supabase.auth.signOut();
+            return;
+          }
+
+          toast.success("Login realizado com sucesso!");
+          navigate("/gerar-recibo");
+        } catch (error) {
+          console.error("Erro ao verificar status da conta:", error);
           toast.error("Erro ao verificar status da sua conta");
           await supabase.auth.signOut();
-          setLoading(false);
-          return;
         }
-
-        if (approvalData?.status !== 'approved') {
-          toast.error("Sua conta ainda não foi aprovada pelo administrador.");
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
-        }
-
-        toast.success("Login realizado com sucesso!");
-        navigate("/gerar-recibo");
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -83,7 +105,7 @@ const Login = () => {
     }
 
     try {
-      // Registrar a solicitação na função de edge (ou em uma tabela separada)
+      // Registrar a solicitação na função de edge
       const { error: notifyError } = await supabase.functions.invoke('notify-admin', {
         body: {
           nome: nome,
@@ -160,7 +182,12 @@ const Login = () => {
                     className="w-full"
                     disabled={loading}
                   >
-                    {loading ? "Entrando..." : "Entrar"}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : "Entrar"}
                   </Button>
                 </form>
               </TabsContent>
@@ -204,7 +231,12 @@ const Login = () => {
                     className="w-full"
                     disabled={loading}
                   >
-                    {loading ? "Enviando..." : "Solicitar Acesso"}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : "Solicitar Acesso"}
                   </Button>
                 </form>
               </TabsContent>
