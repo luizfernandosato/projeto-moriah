@@ -116,26 +116,48 @@ const valorPorExtenso = (valor: number): string => {
   return resultado;
 };
 
-// Função para formatar o número mantendo o formato desejado pelo usuário
+// Função para formatar o número mantendo o formato brasileiro (1.000,00)
 const formatarNumero = (valor: string) => {
   // Se estiver vazio, retorna vazio
   if (!valor) return '';
   
   try {
-    // Remove qualquer caractere que não seja número ou vírgula
-    let valorLimpo = valor.replace(/[^\d,]/g, '');
+    // Remove qualquer caractere que não seja número, vírgula ou ponto
+    let valorLimpo = valor.replace(/[^\d,.]/g, '');
     
     // Se não tiver nenhum número, retorna vazio
     if (!valorLimpo.match(/\d/)) return '';
     
+    // Primeiro, padroniza tudo para usar vírgula como decimal
+    // Remove todos os pontos e depois substitui a última vírgula por um marcador temporário
+    let valorSemPontos = valorLimpo.replace(/\./g, '');
+    
     // Garantir que só existe uma vírgula
-    const partes = valorLimpo.split(',');
+    const partes = valorSemPontos.split(',');
     if (partes.length > 2) {
-      valorLimpo = partes[0] + ',' + partes.slice(1).join('');
+      valorSemPontos = partes[0] + ',' + partes.slice(1).join('');
     }
     
-    // Retorna o valor formatado
-    return valorLimpo;
+    // Separa a parte inteira da decimal
+    const [parteInteira, parteDecimal] = valorSemPontos.split(',');
+    
+    // Formata a parte inteira com pontos a cada 3 dígitos
+    let parteInteiraFormatada = '';
+    for (let i = 0; i < parteInteira.length; i++) {
+      if (i > 0 && (parteInteira.length - i) % 3 === 0) {
+        parteInteiraFormatada += '.';
+      }
+      parteInteiraFormatada += parteInteira[i];
+    }
+    
+    // Reconstrói o número com o formato brasileiro
+    if (parteDecimal) {
+      return `${parteInteiraFormatada},${parteDecimal.slice(0, 2).padEnd(2, '0')}`;
+    } else if (valorSemPontos.includes(',')) {
+      return `${parteInteiraFormatada},00`;
+    } else {
+      return parteInteiraFormatada;
+    }
   } catch (error) {
     console.error("Erro ao formatar número:", error);
     return valor; // Retorna o valor original em caso de erro
@@ -147,8 +169,8 @@ const converterParaNumero = (valorFormatado: string): number => {
   if (!valorFormatado) return 0;
   
   try {
-    // Substitui vírgula por ponto para cálculos
-    const valorNumerico = valorFormatado.replace(',', '.');
+    // Remove os pontos de milhar e substitui vírgula por ponto para cálculos
+    const valorNumerico = valorFormatado.replace(/\./g, '').replace(',', '.');
     return parseFloat(valorNumerico);
   } catch (error) {
     console.error("Erro ao converter para número:", error);
