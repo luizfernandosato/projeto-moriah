@@ -16,22 +16,23 @@ serve(async (req) => {
   }
 
   try {
-    const { adminEmail, newUserEmail, newUserName } = await req.json();
+    const { nome, email, setor } = await req.json();
 
-    console.log("Enviando email para:", adminEmail, "sobre novo usuário:", newUserEmail);
+    console.log("Enviando email sobre solicitação de acesso para:", email);
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Projeto Moriah <onboarding@resend.dev>',
-      to: adminEmail,
+      to: 'luizfernandosato@gmail.com',
       subject: 'Nova solicitação de acesso - Projeto Moriah',
       html: `
         <h1>Nova solicitação de acesso</h1>
         <p>Um novo usuário solicitou acesso ao sistema:</p>
         <ul>
-          <li><strong>Nome:</strong> ${newUserName}</li>
-          <li><strong>Email:</strong> ${newUserEmail}</li>
+          <li><strong>Nome:</strong> ${nome}</li>
+          <li><strong>Email:</strong> ${email}</li>
+          <li><strong>Setor:</strong> ${setor}</li>
         </ul>
-        <p>Por favor, acesse o painel administrativo para aprovar ou rejeitar esta solicitação.</p>
+        <p>Por favor, acesse o painel administrativo do Supabase para criar uma conta para este usuário.</p>
       `,
     });
 
