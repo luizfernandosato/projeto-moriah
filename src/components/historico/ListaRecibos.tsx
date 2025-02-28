@@ -10,6 +10,7 @@ interface Recibo {
   pagador: string;
   valor: number;
   data: string;
+  created_at: string;
   pdf_url: string | null;
   numero_recibo: number;
 }
@@ -75,7 +76,7 @@ export const ListaRecibos = ({
                   Recibo #{formatarNumeroRecibo(recibo.numero_recibo)} - {recibo.pagador}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {format(new Date(recibo.data), "dd/MM/yyyy")} - {formatarMoeda(recibo.valor)}
+                  {recibo.created_at && format(new Date(recibo.created_at), "HH:mm")} - {format(new Date(recibo.data), "dd/MM/yyyy")} - {formatarMoeda(recibo.valor)}
                 </p>
               </div>
             </div>
