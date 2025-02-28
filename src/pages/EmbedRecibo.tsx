@@ -4,6 +4,7 @@ import GerarRecibo from './GerarRecibo';
 import Login from './Login';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Footer } from "@/components/layout/Footer";
 
 const EmbedRecibo = () => {
   const [loading, setLoading] = useState(true);
@@ -39,10 +40,11 @@ const EmbedRecibo = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white flex flex-col">
+      <main className="container mx-auto px-4 py-8 flex-grow">
         {!user ? <Login /> : <GerarRecibo />}
       </main>
+      <Footer />
     </div>
   );
 };
