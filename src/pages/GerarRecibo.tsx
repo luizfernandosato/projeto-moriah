@@ -321,7 +321,6 @@ const GerarRecibo = () => {
     const doc = new jsPDF();
     const valorNumerico = parseFloat(formData.valor.replace(/\./g, '').replace(',', '.')) / 100;
     const valorExtenso = valorPorExtenso(valorNumerico);
-    const dataNumerica = formatarDataNumerica(formData.data);
     const dataCompleta = formatarDataCompleta(formData.data);
 
     doc.setFont("helvetica");
@@ -364,9 +363,8 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    // Formatos de data solicitados
-    doc.text(`Dia/Mês/Ano: ${dataNumerica}`, 15, 120);
-    doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 130);
+    // Apenas o formato de data completa com cidade e estado
+    doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 120);
 
     doc.line(15, 160, 195, 160);
 
