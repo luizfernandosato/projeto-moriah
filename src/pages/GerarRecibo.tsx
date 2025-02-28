@@ -373,38 +373,39 @@ const GerarRecibo = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    // Aqui está a correção: use o valor do formulário diretamente no PDF
-    const valorNumerico = converterParaNumero(formData.valor);
-    const valorExtenso = valorPorExtenso(valorNumerico);
+    const valorExtenso = valorPorExtenso(converterParaNumero(formData.valor));
     const dataCompleta = formatarDataCompleta(formData.data);
 
     doc.setFont("helvetica");
-    doc.setFontSize(16);
-
+    
     const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
     
-    // Corrigindo o tamanho da logo
-    doc.addImage(logoUrl, 'JPEG', 15, 15, 50, 15);
+    // Ajustando a logo para ficar alinhada com o texto à direita
+    doc.addImage(logoUrl, 'JPEG', 15, 10, 40, 12);
 
+    // Informações à direita do cabeçalho
     doc.setFontSize(8);
-    doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 15, { align: "right" });
-    doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 20, { align: "right" });
-    doc.text("Lei Municipal n° 5089/2020", 195, 25, { align: "right" });
-    doc.text("Estrada Pitanga, 1266 - Dist. Iguatemi", 195, 35, { align: "right" });
-    doc.text("Cep: 87103-089 - Maringá - PR", 195, 40, { align: "right" });
-    doc.text("Fone: (44) 3276-3569", 195, 45, { align: "right" });
-    doc.text("CNPJ: 01.725.957.0001-40", 195, 50, { align: "right" });
+    doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 10, { align: "right" });
+    doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 15, { align: "right" });
+    doc.text("Lei Municipal n° 5089/2020", 195, 20, { align: "right" });
+    doc.text("Estrada Pitanga, 1266 - Dist. Iguatemi", 195, 30, { align: "right" });
+    doc.text("Cep: 87103-089 - Maringá - PR", 195, 35, { align: "right" });
+    doc.text("Fone: (44) 3276-3569", 195, 40, { align: "right" });
+    doc.text("CNPJ: 01.725.957.0001-40", 195, 45, { align: "right" });
 
+    // Número do recibo
     doc.setFontSize(10);
-    doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 60, { align: "right" });
+    doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 55, { align: "right" });
 
+    // Título do recibo
     doc.setFontSize(16);
     doc.text("RECIBO DE", 105, 70, { align: "center" });
-    doc.setFontSize(12);
     
-    // Exibindo o valor formatado como está no formulário
+    // Valor - usando exatamente o mesmo formato que está no formulário
+    doc.setFontSize(14);
     doc.text(`R$ ${formData.valor}`, 105, 80, { align: "center" });
 
+    // Conteúdo do recibo
     doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
       `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
@@ -412,11 +413,13 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    // Apenas o formato de data completa com cidade e estado
+    // Data e local
     doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 120);
 
+    // Linha de assinatura
     doc.line(15, 160, 195, 160);
 
+    // Dados do recebedor
     doc.setFontSize(10);
     doc.text(`${formData.recebedor}`, 105, 170, { align: "center" });
     doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 175, { align: "center" });
