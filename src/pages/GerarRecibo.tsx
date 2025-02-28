@@ -116,44 +116,47 @@ const valorPorExtenso = (valor: number): string => {
   return resultado;
 };
 
-// Esta função agora preserva o valor original conforme digitado
+// Função para formatar o número mantendo o formato desejado pelo usuário
 const formatarNumero = (valor: string) => {
-  // Remove tudo que não for dígito, ponto ou vírgula
-  let numeroLimpo = valor.replace(/[^\d.,]/g, '');
-  
-  // Garante que só há uma vírgula
-  if (numeroLimpo.indexOf(',') !== numeroLimpo.lastIndexOf(',')) {
-    numeroLimpo = numeroLimpo.replace(/,/g, function(match, index, original) {
-      return (index === original.lastIndexOf(',')) ? match : '';
+  try {
+    // Remove qualquer caractere que não seja número, vírgula ou ponto
+    let valorLimpo = valor.replace(/[^\d,.]/g, '');
+    
+    // Se estiver vazio, retorna vazio
+    if (!valorLimpo) return '';
+    
+    // Garante que só existe uma vírgula no valor
+    const partes = valorLimpo.split(',');
+    if (partes.length > 2) {
+      valorLimpo = partes[0] + ',' + partes.slice(1).join('');
+    }
+    
+    // Formata o número com separador de milhares e duas casas decimais
+    const numero = valorLimpo.replace(',', '.');
+    const formatado = parseFloat(numero).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
+    
+    return formatado;
+  } catch (error) {
+    console.error("Erro ao formatar número:", error);
+    return valor; // Retorna o valor original em caso de erro
   }
-  
-  // Substitui pontos por nada (para milhares)
-  numeroLimpo = numeroLimpo.replace(/\./g, '');
-  
-  // Substitui vírgula por ponto para o formato decimal
-  numeroLimpo = numeroLimpo.replace(',', '.');
-  
-  // Se não há valor, retorna vazio
-  if (numeroLimpo === '') return '';
-
-  // Converte para número e formata para exibição
-  const valorNumerico = parseFloat(numeroLimpo);
-  
-  return valorNumerico.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 };
 
-// Função para converter o valor de exibição para o formato numérico real
+// Função para converter o valor formatado para número
 const converterParaNumero = (valorFormatado: string): number => {
   if (!valorFormatado) return 0;
   
-  // Remove pontos de milhar e substitui vírgula por ponto
-  const valorNumerico = valorFormatado.replace(/\./g, '').replace(',', '.');
-  
-  return parseFloat(valorNumerico);
+  try {
+    // Remove os pontos de milhar e substitui vírgula por ponto para cálculos
+    const valorNumerico = valorFormatado.replace(/\./g, '').replace(',', '.');
+    return parseFloat(valorNumerico);
+  } catch (error) {
+    console.error("Erro ao converter para número:", error);
+    return 0;
+  }
 };
 
 const formatarNumeroRecibo = (numero: number) => {
@@ -278,12 +281,17 @@ const GerarRecibo = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
     if (name === 'valor') {
-      const numeroFormatado = formatarNumero(value);
-      setFormData(prev => ({
-        ...prev,
-        [name]: numeroFormatado
-      }));
+      try {
+        const numeroFormatado = formatarNumero(value);
+        setFormData(prev => ({
+          ...prev,
+          [name]: numeroFormatado
+        }));
+      } catch (error) {
+        console.error("Erro ao processar valor:", error);
+      }
     } else if (name.startsWith('enderecoRecebedor.')) {
       const campo = name.split('.')[1];
       setFormData(prev => ({
