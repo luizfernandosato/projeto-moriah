@@ -14,6 +14,7 @@ export type Database = {
           cpf_cnpj: string
           created_at: string
           id: string
+          is_public: boolean
           nome: string
           user_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           cpf_cnpj: string
           created_at?: string
           id?: string
+          is_public?: boolean
           nome: string
           user_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           cpf_cnpj?: string
           created_at?: string
           id?: string
+          is_public?: boolean
           nome?: string
           user_id?: string
         }
@@ -43,6 +46,7 @@ export type Database = {
           created_at: string
           estado: string
           id: string
+          is_public: boolean
           nome: string
           numero: string
           rua: string
@@ -57,6 +61,7 @@ export type Database = {
           created_at?: string
           estado: string
           id?: string
+          is_public?: boolean
           nome: string
           numero: string
           rua: string
@@ -71,6 +76,7 @@ export type Database = {
           created_at?: string
           estado?: string
           id?: string
+          is_public?: boolean
           nome?: string
           numero?: string
           rua?: string
