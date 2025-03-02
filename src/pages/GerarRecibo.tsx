@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -831,4 +832,300 @@ const GerarRecibo = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="pagador">Nome
+                    <Label htmlFor="pagador">Nome</Label>
+                    <Input
+                      id="pagador"
+                      name="pagador"
+                      value={formData.pagador}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                    <Input
+                      id="cpfCnpj"
+                      name="cpfCnpj"
+                      value={formData.cpfCnpj}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="valor">Valor</Label>
+                  <Input
+                    id="valor"
+                    name="valor"
+                    value={formData.valor}
+                    onChange={handleInputChange}
+                    placeholder="0,00"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Input
+                    id="descricao"
+                    name="descricao"
+                    value={formData.descricao}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="data">Data</Label>
+                    <Input
+                      id="data"
+                      name="data"
+                      type="date"
+                      value={formData.data}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="estado">Estado</Label>
+                    <Select 
+                      value={formData.estado} 
+                      onValueChange={(value) => handleEstadoChange(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {estados.map((estado) => (
+                            <SelectItem key={estado.sigla} value={estado.sigla}>
+                              {estado.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade</Label>
+                    <Select 
+                      value={formData.cidade} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a cidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {cidades
+                            .filter(c => c.estado === formData.estado)
+                            .map((cidade) => (
+                              <SelectItem key={cidade.nome} value={cidade.nome}>
+                                {cidade.nome}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-row justify-between items-center">
+                  <h3 className="text-lg font-semibold">Dados do Recebedor</h3>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={resetToDefaultRecebedor}
+                    >
+                      Padrão
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleSaveFavorito}
+                    >
+                      <Star className="h-4 w-4 mr-1" /> Salvar
+                    </Button>
+                  </div>
+                </div>
+
+                {favoritos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Favoritos</Label>
+                    <Select onValueChange={(id) => {
+                      const favorito = favoritos.find(f => f.id === id);
+                      if (favorito) handleFavoritoSelect(favorito);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um recebedor favorito" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {favoritos.map((favorito) => (
+                            <SelectItem key={favorito.id} value={favorito.id}>
+                              {favorito.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="recebedor">Nome</Label>
+                    <Input
+                      id="recebedor"
+                      name="recebedor"
+                      value={formData.recebedor}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cpfCnpjRecebedor">CPF/CNPJ</Label>
+                    <Input
+                      id="cpfCnpjRecebedor"
+                      name="cpfCnpjRecebedor"
+                      value={formData.cpfCnpjRecebedor}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Endereço</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.rua">Rua</Label>
+                      <Input
+                        id="enderecoRecebedor.rua"
+                        name="enderecoRecebedor.rua"
+                        value={formData.enderecoRecebedor.rua}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.numero">Número</Label>
+                      <Input
+                        id="enderecoRecebedor.numero"
+                        name="enderecoRecebedor.numero"
+                        value={formData.enderecoRecebedor.numero}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.bairro">Bairro</Label>
+                      <Input
+                        id="enderecoRecebedor.bairro"
+                        name="enderecoRecebedor.bairro"
+                        value={formData.enderecoRecebedor.bairro}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.complemento">Complemento</Label>
+                      <Input
+                        id="enderecoRecebedor.complemento"
+                        name="enderecoRecebedor.complemento"
+                        value={formData.enderecoRecebedor.complemento}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.estado">Estado</Label>
+                      <Select 
+                        value={formData.enderecoRecebedor.estado} 
+                        onValueChange={(value) => handleRecebedorEstadoChange(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {estados.map((estado) => (
+                              <SelectItem key={estado.sigla} value={estado.sigla}>
+                                {estado.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.cidade">Cidade</Label>
+                      <Select 
+                        value={formData.enderecoRecebedor.cidade} 
+                        onValueChange={(value) => setFormData(prev => ({ 
+                          ...prev, 
+                          enderecoRecebedor: {
+                            ...prev.enderecoRecebedor,
+                            cidade: value
+                          }
+                        }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a cidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {cidades
+                              .filter(c => c.estado === formData.enderecoRecebedor.estado)
+                              .map((cidade) => (
+                                <SelectItem key={cidade.nome} value={cidade.nome}>
+                                  {cidade.nome}
+                                </SelectItem>
+                              ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="enderecoRecebedor.cep">CEP</Label>
+                      <Input
+                        id="enderecoRecebedor.cep"
+                        name="enderecoRecebedor.cep"
+                        value={formData.enderecoRecebedor.cep}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="justify-end space-x-2">
+              <Button
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? "Gerando..." : "Gerar Recibo"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default GerarRecibo;
