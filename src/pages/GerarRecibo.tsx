@@ -260,6 +260,7 @@ const GerarRecibo = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [cidadesRecebedor, setCidadesRecebedor] = useState<Cidade[]>([]);
   const [favoritos, setFavoritos] = useState<RecebedorFavorito[]>([]);
   const [pagadoresFavoritos, setPagadoresFavoritos] = useState<PagadorFavorito[]>([]);
   const [formData, setFormData] = useState({
@@ -289,12 +290,9 @@ const GerarRecibo = () => {
     fetchUltimoNumeroRecibo();
     loadFavoritos();
     loadPagadoresFavoritos();
-    if (formData.estado) {
-      handleEstadoChange(formData.estado);
-    }
-    if (formData.enderecoRecebedor.estado) {
-      handleRecebedorEstadoChange(formData.enderecoRecebedor.estado);
-    }
+    
+    handleEstadoChange(formData.estado);
+    handleRecebedorEstadoChange(formData.enderecoRecebedor.estado);
   }, []);
 
   const fetchUltimoNumeroRecibo = async () => {
@@ -448,7 +446,7 @@ const GerarRecibo = () => {
     try {
       const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`);
       const data = await response.json();
-      setCidades(data.map((cidade: any) => ({
+      setCidadesRecebedor(data.map((cidade: any) => ({
         nome: cidade.nome,
         estado: estado
       })));
@@ -1091,7 +1089,7 @@ const GerarRecibo = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {cidades
+                            {cidadesRecebedor
                               .filter(c => c.estado === formData.enderecoRecebedor.estado)
                               .map((cidade) => (
                                 <SelectItem key={cidade.nome} value={cidade.nome}>
