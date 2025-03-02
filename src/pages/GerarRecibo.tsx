@@ -322,7 +322,8 @@ const GerarRecibo = () => {
       
       const { data, error } = await supabase
         .from('recebedores_favoritos')
-        .select('*');
+        .select('*')
+        .eq('is_public', true);
 
       if (error) throw error;
       
@@ -353,7 +354,8 @@ const GerarRecibo = () => {
       
       const { data, error } = await supabase
         .from('pagadores_favoritos')
-        .select('*');
+        .select('*')
+        .eq('is_public', true);
 
       if (error) throw error;
       
