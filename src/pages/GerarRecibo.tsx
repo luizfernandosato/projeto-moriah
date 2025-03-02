@@ -319,12 +319,10 @@ const GerarRecibo = () => {
   const loadFavoritos = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+      
       const { data, error } = await supabase
         .from('recebedores_favoritos')
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
 
       if (error) throw error;
       
@@ -352,12 +350,10 @@ const GerarRecibo = () => {
   const loadPagadoresFavoritos = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+      
       const { data, error } = await supabase
         .from('pagadores_favoritos')
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
 
       if (error) throw error;
       
@@ -513,7 +509,8 @@ const GerarRecibo = () => {
         cidade: formData.enderecoRecebedor.cidade,
         estado: formData.enderecoRecebedor.estado,
         complemento: formData.enderecoRecebedor.complemento || '',
-        cep: formData.enderecoRecebedor.cep
+        cep: formData.enderecoRecebedor.cep,
+        is_public: true
       };
 
       const { data, error } = await supabase
@@ -547,7 +544,8 @@ const GerarRecibo = () => {
       const novoPagadorFavorito = {
         user_id: user.id,
         nome: formData.pagador,
-        cpf_cnpj: formData.cpfCnpj
+        cpf_cnpj: formData.cpfCnpj,
+        is_public: true
       };
 
       const { data, error } = await supabase

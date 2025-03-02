@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -14,11 +13,8 @@ import { Loader2 } from "lucide-react";
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  // Estado para login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  // Estado para solicitação de acesso
   const [nome, setNome] = useState("");
   const [emailSolicitacao, setEmailSolicitacao] = useState("");
   const [setor, setSetor] = useState("");
@@ -28,7 +24,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Fazer login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -47,8 +42,6 @@ const Login = () => {
         return;
       }
 
-      // Autenticar o usuário e então redirecionar
-      // Ao invés de verificar o status, estamos permitindo o login diretamente
       toast.success("Login realizado com sucesso!");
       navigate("/gerar-recibo");
     } catch (error) {
@@ -69,7 +62,6 @@ const Login = () => {
     }
 
     try {
-      // Registrar a solicitação na função de edge
       const { error: notifyError } = await supabase.functions.invoke('notify-admin', {
         body: {
           nome: nome,

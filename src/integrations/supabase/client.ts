@@ -23,6 +23,7 @@ export type CustomDatabase = Database & {
           complemento: string | null;
           cep: string;
           created_at: string;
+          is_public: boolean; // New field to indicate if favorite is public
         };
         Insert: {
           id?: string;
@@ -37,6 +38,7 @@ export type CustomDatabase = Database & {
           complemento?: string | null;
           cep: string;
           created_at?: string;
+          is_public?: boolean; // New field to indicate if favorite is public
         };
         Update: {
           id?: string;
@@ -51,6 +53,7 @@ export type CustomDatabase = Database & {
           complemento?: string | null;
           cep?: string;
           created_at?: string;
+          is_public?: boolean; // New field to indicate if favorite is public
         };
         Relationships: [
           {
@@ -68,6 +71,7 @@ export type CustomDatabase = Database & {
           nome: string;
           cpf_cnpj: string;
           created_at: string;
+          is_public: boolean; // New field to indicate if favorite is public
         };
         Insert: {
           id?: string;
@@ -75,6 +79,7 @@ export type CustomDatabase = Database & {
           nome: string;
           cpf_cnpj: string;
           created_at?: string;
+          is_public?: boolean; // New field to indicate if favorite is public
         };
         Update: {
           id?: string;
@@ -82,6 +87,7 @@ export type CustomDatabase = Database & {
           nome?: string;
           cpf_cnpj?: string;
           created_at?: string;
+          is_public?: boolean; // New field to indicate if favorite is public
         };
         Relationships: [
           {
