@@ -1,6 +1,7 @@
 
 import { NavBar } from "@/components/navbar/NavBar";
 import { Footer } from "@/components/layout/Footer";
+import React from "react";
 
 /*
  * Copyright © 2024 Fernando Sato. Todos os direitos reservados.
@@ -12,7 +13,7 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-secondary/30 flex flex-col">
       <NavBar />
