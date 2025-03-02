@@ -600,7 +600,7 @@ const GerarRecibo = () => {
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 120);
+    doc.text(`${formData.enderecoRecebedor.cidade} - ${formData.enderecoRecebedor.estado}, ${dataCompleta}`, 15, 120);
 
     doc.line(15, 160, 195, 160);
 
@@ -880,7 +880,7 @@ const GerarRecibo = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="data">Data</Label>
+                    <Label htmlFor="data">Data do Pagamento</Label>
                     <Input
                       id="data"
                       name="data"
