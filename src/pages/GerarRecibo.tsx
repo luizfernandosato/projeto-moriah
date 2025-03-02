@@ -262,8 +262,8 @@ const GerarRecibo = () => {
     descricao: "",
     data: new Date().toISOString().split('T')[0],
     local: "",
-    estado: "",
-    cidade: "",
+    estado: "PR",
+    cidade: "Maringá",
     recebedor: "PROJETO MORIAH MARINGÁ",
     cpfCnpjRecebedor: "01.725.975/0001-40",
     enderecoRecebedor: {
@@ -281,6 +281,9 @@ const GerarRecibo = () => {
   useEffect(() => {
     fetchUltimoNumeroRecibo();
     loadFavoritos();
+    if (formData.estado) {
+      handleEstadoChange(formData.estado);
+    }
     if (formData.enderecoRecebedor.estado) {
       handleRecebedorEstadoChange(formData.enderecoRecebedor.estado);
     }
@@ -373,8 +376,7 @@ const GerarRecibo = () => {
   const handleEstadoChange = async (estado: string) => {
     setFormData(prev => ({
       ...prev,
-      estado,
-      cidade: ""
+      estado
     }));
 
     try {
@@ -384,6 +386,18 @@ const GerarRecibo = () => {
         nome: cidade.nome,
         estado: estado
       })));
+
+      if (estado === 'PR') {
+        setFormData(prev => ({
+          ...prev,
+          cidade: 'Maringá'
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          cidade: ""
+        }));
+      }
     } catch (error) {
       console.error('Erro ao buscar cidades:', error);
       toast.error("Erro ao carregar cidades");
@@ -395,8 +409,7 @@ const GerarRecibo = () => {
       ...prev,
       enderecoRecebedor: {
         ...prev.enderecoRecebedor,
-        estado,
-        cidade: ""
+        estado
       }
     }));
 
@@ -407,6 +420,24 @@ const GerarRecibo = () => {
         nome: cidade.nome,
         estado: estado
       })));
+
+      if (estado === 'PR') {
+        setFormData(prev => ({
+          ...prev,
+          enderecoRecebedor: {
+            ...prev.enderecoRecebedor,
+            cidade: 'Maringá'
+          }
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          enderecoRecebedor: {
+            ...prev.enderecoRecebedor,
+            cidade: ""
+          }
+        }));
+      }
     } catch (error) {
       console.error('Erro ao buscar cidades:', error);
       toast.error("Erro ao carregar cidades");
