@@ -219,6 +219,12 @@ interface RecebedorFavorito {
   endereco: Endereco;
 }
 
+interface PagadorFavorito {
+  id: string;
+  nome: string;
+  cpfCnpj: string;
+}
+
 const estados: Estado[] = [
   { sigla: 'AC', nome: 'Acre' },
   { sigla: 'AL', nome: 'Alagoas' },
@@ -255,6 +261,7 @@ const GerarRecibo = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [cidades, setCidades] = useState<Cidade[]>([]);
   const [favoritos, setFavoritos] = useState<RecebedorFavorito[]>([]);
+  const [pagadoresFavoritos, setPagadoresFavoritos] = useState<PagadorFavorito[]>([]);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -281,6 +288,7 @@ const GerarRecibo = () => {
   useEffect(() => {
     fetchUltimoNumeroRecibo();
     loadFavoritos();
+    loadPagadoresFavoritos();
     if (formData.estado) {
       handleEstadoChange(formData.estado);
     }
@@ -340,6 +348,30 @@ const GerarRecibo = () => {
       setFavoritos(favoritosFormatados);
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error);
+    }
+  };
+
+  const loadPagadoresFavoritos = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('pagadores_favoritos')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      const favoritosFormatados: PagadorFavorito[] = (data || []).map(item => ({
+        id: item.id,
+        nome: item.nome,
+        cpfCnpj: item.cpf_cnpj,
+      }));
+      
+      setPagadoresFavoritos(favoritosFormatados);
+    } catch (error) {
+      console.error('Erro ao carregar pagadores favoritos:', error);
     }
   };
 
@@ -457,6 +489,14 @@ const GerarRecibo = () => {
     }
   };
 
+  const handlePagadorFavoritoSelect = (favorito: PagadorFavorito) => {
+    setFormData(prev => ({
+      ...prev,
+      pagador: favorito.nome,
+      cpfCnpj: favorito.cpfCnpj
+    }));
+  };
+
   const handleSaveFavorito = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -490,6 +530,40 @@ const GerarRecibo = () => {
     } catch (error) {
       console.error('Erro ao salvar favorito:', error);
       toast.error("Erro ao salvar favorito");
+    }
+  };
+
+  const handleSavePagadorFavorito = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado para salvar favoritos");
+        return;
+      }
+
+      if (!formData.pagador || !formData.cpfCnpj) {
+        toast.error("Nome e CPF/CNPJ do pagador são obrigatórios");
+        return;
+      }
+
+      const novoPagadorFavorito = {
+        user_id: user.id,
+        nome: formData.pagador,
+        cpf_cnpj: formData.cpfCnpj
+      };
+
+      const { data, error } = await supabase
+        .from('pagadores_favoritos')
+        .insert(novoPagadorFavorito)
+        .select();
+
+      if (error) throw error;
+      
+      toast.success("Pagador salvo nos favoritos");
+      loadPagadoresFavoritos();
+    } catch (error) {
+      console.error('Erro ao salvar pagador favorito:', error);
+      toast.error("Erro ao salvar pagador favorito");
     }
   };
 
@@ -720,158 +794,31 @@ const GerarRecibo = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Dados do Pagador</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pagador">Nome do Pagador</Label>
-                    <Input
-                      id="pagador"
-                      name="pagador"
-                      value={formData.pagador}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
-                    <Input
-                      id="cpfCnpj"
-                      name="cpfCnpj"
-                      value={formData.cpfCnpj}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Dados do Recibo</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor (R$)</Label>
-                    <Input
-                      id="valor"
-                      name="valor"
-                      value={formData.valor}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="0,00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Valor por Extenso</Label>
-                    <Input
-                      value={formData.valor ? valorPorExtenso(converterParaNumero(formData.valor)) : ""}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Input
-                    id="descricao"
-                    name="descricao"
-                    value={formData.descricao}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="data">Data</Label>
-                    <Input
-                      id="data"
-                      name="data"
-                      type="date"
-                      value={formData.data}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="estado">Estado</Label>
-                    <Select
-                      value={formData.estado}
-                      onValueChange={handleEstadoChange}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {estados.map((estado) => (
-                            <SelectItem key={estado.sigla} value={estado.sigla}>
-                              {estado.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <Select
-                      value={formData.cidade}
-                      onValueChange={(cidade) => setFormData(prev => ({ ...prev, cidade }))}
-                      disabled={!formData.estado}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma cidade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {cidades.map((cidade) => (
-                            <SelectItem key={cidade.nome} value={cidade.nome}>
-                              {cidade.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
                 <div className="flex flex-row justify-between items-center">
-                  <h3 className="text-lg font-semibold">Dados do Recebedor</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={resetToDefaultRecebedor}
-                    >
-                      Restaurar Padrão
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleSaveFavorito}
-                    >
-                      <Star className="h-4 w-4 mr-1" /> Salvar
-                    </Button>
-                  </div>
+                  <h3 className="text-lg font-semibold">Dados do Pagador</h3>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleSavePagadorFavorito}
+                  >
+                    <Star className="h-4 w-4 mr-1" /> Salvar
+                  </Button>
                 </div>
 
-                {favoritos.length > 0 && (
+                {pagadoresFavoritos.length > 0 && (
                   <div className="space-y-2">
                     <Label>Favoritos</Label>
                     <Select onValueChange={(id) => {
-                      const favorito = favoritos.find(f => f.id === id);
-                      if (favorito) handleFavoritoSelect(favorito);
+                      const favorito = pagadoresFavoritos.find(f => f.id === id);
+                      if (favorito) handlePagadorFavoritoSelect(favorito);
                     }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um recebedor favorito" />
+                        <SelectValue placeholder="Selecione um pagador favorito" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {favoritos.map((favorito) => (
+                          {pagadoresFavoritos.map((favorito) => (
                             <SelectItem key={favorito.id} value={favorito.id}>
                               {favorito.nome}
                             </SelectItem>
@@ -881,169 +828,7 @@ const GerarRecibo = () => {
                     </Select>
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="recebedor">Nome do Recebedor</Label>
-                    <Input
-                      id="recebedor"
-                      name="recebedor"
-                      value={formData.recebedor}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cpfCnpjRecebedor">CPF/CNPJ do Recebedor</Label>
-                    <Input
-                      id="cpfCnpjRecebedor"
-                      name="cpfCnpjRecebedor"
-                      value={formData.cpfCnpjRecebedor}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.rua">Rua</Label>
-                      <Input
-                        id="enderecoRecebedor.rua"
-                        name="enderecoRecebedor.rua"
-                        value={formData.enderecoRecebedor.rua}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.numero">Número</Label>
-                      <Input
-                        id="enderecoRecebedor.numero"
-                        name="enderecoRecebedor.numero"
-                        value={formData.enderecoRecebedor.numero}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.bairro">Bairro</Label>
-                      <Input
-                        id="enderecoRecebedor.bairro"
-                        name="enderecoRecebedor.bairro"
-                        value={formData.enderecoRecebedor.bairro}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.complemento">Complemento</Label>
-                      <Input
-                        id="enderecoRecebedor.complemento"
-                        name="enderecoRecebedor.complemento"
-                        value={formData.enderecoRecebedor.complemento}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.estado">Estado</Label>
-                      <Select
-                        value={formData.enderecoRecebedor.estado}
-                        onValueChange={handleRecebedorEstadoChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {estados.map((estado) => (
-                              <SelectItem key={estado.sigla} value={estado.sigla}>
-                                {estado.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.cidade">Cidade</Label>
-                      <Select
-                        value={formData.enderecoRecebedor.cidade}
-                        onValueChange={(cidade) => setFormData(prev => ({
-                          ...prev,
-                          enderecoRecebedor: {
-                            ...prev.enderecoRecebedor,
-                            cidade
-                          }
-                        }))}
-                        disabled={!formData.enderecoRecebedor.estado}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma cidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {cidades.map((cidade) => (
-                              <SelectItem key={cidade.nome} value={cidade.nome}>
-                                {cidade.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="enderecoRecebedor.cep">CEP</Label>
-                      <Input
-                        id="enderecoRecebedor.cep"
-                        name="enderecoRecebedor.cep"
-                        value={formData.enderecoRecebedor.cep}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={() => navigate("/")}
-                disabled={isLoading}
-                className="w-full sm:w-auto"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit"
-                disabled={isLoading}
-                className="w-full sm:w-auto"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Gerando...
-                  </>
-                ) : (
-                  'Gerar Recibo'
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
-      </div>
-    </MainLayout>
-  );
-};
-
-export default GerarRecibo;
+                    <Label htmlFor="pagador">Nome
