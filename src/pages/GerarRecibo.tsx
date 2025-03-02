@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Star } from "lucide-react";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -116,32 +115,23 @@ const valorPorExtenso = (valor: number): string => {
   return resultado;
 };
 
-// Função para formatar o número mantendo o formato brasileiro (1.000,00)
 const formatarNumero = (valor: string) => {
-  // Se estiver vazio, retorna vazio
   if (!valor) return '';
   
   try {
-    // Remove qualquer caractere que não seja número, vírgula ou ponto
     let valorLimpo = valor.replace(/[^\d,.]/g, '');
     
-    // Se não tiver nenhum número, retorna vazio
     if (!valorLimpo.match(/\d/)) return '';
     
-    // Primeiro, padroniza tudo para usar vírgula como decimal
-    // Remove todos os pontos e depois substitui a última vírgula por um marcador temporário
     let valorSemPontos = valorLimpo.replace(/\./g, '');
     
-    // Garantir que só existe uma vírgula
     const partes = valorSemPontos.split(',');
     if (partes.length > 2) {
       valorSemPontos = partes[0] + ',' + partes.slice(1).join('');
     }
     
-    // Separa a parte inteira da decimal
     const [parteInteira, parteDecimal] = valorSemPontos.split(',');
     
-    // Formata a parte inteira com pontos a cada 3 dígitos
     let parteInteiraFormatada = '';
     for (let i = 0; i < parteInteira.length; i++) {
       if (i > 0 && (parteInteira.length - i) % 3 === 0) {
@@ -150,7 +140,6 @@ const formatarNumero = (valor: string) => {
       parteInteiraFormatada += parteInteira[i];
     }
     
-    // Reconstrói o número com o formato brasileiro
     if (parteDecimal) {
       return `${parteInteiraFormatada},${parteDecimal.slice(0, 2).padEnd(2, '0')}`;
     } else if (valorSemPontos.includes(',')) {
@@ -160,16 +149,14 @@ const formatarNumero = (valor: string) => {
     }
   } catch (error) {
     console.error("Erro ao formatar número:", error);
-    return valor; // Retorna o valor original em caso de erro
+    return valor;
   }
 };
 
-// Função para converter o valor formatado para número
 const converterParaNumero = (valorFormatado: string): number => {
   if (!valorFormatado) return 0;
   
   try {
-    // Remove os pontos de milhar e substitui vírgula por ponto para cálculos
     const valorNumerico = valorFormatado.replace(/\./g, '').replace(',', '.');
     return parseFloat(valorNumerico);
   } catch (error) {
@@ -215,6 +202,21 @@ interface Cidade {
   estado: string;
 }
 
+interface RecebedorFavorito {
+  id: string;
+  nome: string;
+  cpfCnpj: string;
+  endereco: {
+    rua: string;
+    numero: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    complemento: string;
+    cep: string;
+  }
+}
+
 const estados: Estado[] = [
   { sigla: 'AC', nome: 'Acre' },
   { sigla: 'AL', nome: 'Alagoas' },
@@ -250,6 +252,7 @@ const GerarRecibo = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [favoritos, setFavoritos] = useState<RecebedorFavorito[]>([]);
   const [formData, setFormData] = useState({
     pagador: "",
     cpfCnpj: "",
@@ -259,22 +262,26 @@ const GerarRecibo = () => {
     local: "",
     estado: "",
     cidade: "",
-    recebedor: "",
-    cpfCnpjRecebedor: "",
+    recebedor: "PROJETO MORIAH MARINGÁ",
+    cpfCnpjRecebedor: "01.725.975/0001-40",
     enderecoRecebedor: {
-      rua: "",
-      numero: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
+      rua: "Estrada Pitanga",
+      numero: "1266",
+      bairro: "Distrito de Iguatemi",
+      cidade: "Maringá",
+      estado: "PR",
       complemento: "",
-      cep: ""
+      cep: "87103-089"
     },
     numeroRecibo: ""
   });
 
   useEffect(() => {
     fetchUltimoNumeroRecibo();
+    loadFavoritos();
+    if (formData.enderecoRecebedor.estado) {
+      handleRecebedorEstadoChange(formData.enderecoRecebedor.estado);
+    }
   }, []);
 
   const fetchUltimoNumeroRecibo = async () => {
@@ -295,6 +302,23 @@ const GerarRecibo = () => {
     } catch (error) {
       console.error('Erro ao buscar número do recibo:', error);
       toast.error("Erro ao gerar número do recibo");
+    }
+  };
+
+  const loadFavoritos = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('recebedores_favoritos')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setFavoritos(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar favoritos:', error);
     }
   };
 
@@ -371,6 +395,55 @@ const GerarRecibo = () => {
     }
   };
 
+  const handleFavoritoSelect = (favorito: RecebedorFavorito) => {
+    setFormData(prev => ({
+      ...prev,
+      recebedor: favorito.nome,
+      cpfCnpjRecebedor: favorito.cpfCnpj,
+      enderecoRecebedor: favorito.endereco
+    }));
+    
+    if (favorito.endereco.estado) {
+      handleRecebedorEstadoChange(favorito.endereco.estado);
+    }
+  };
+
+  const handleSaveFavorito = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado para salvar favoritos");
+        return;
+      }
+
+      const novoFavorito = {
+        user_id: user.id,
+        nome: formData.recebedor,
+        cpf_cnpj: formData.cpfCnpjRecebedor,
+        rua: formData.enderecoRecebedor.rua,
+        numero: formData.enderecoRecebedor.numero,
+        bairro: formData.enderecoRecebedor.bairro,
+        cidade: formData.enderecoRecebedor.cidade,
+        estado: formData.enderecoRecebedor.estado,
+        complemento: formData.enderecoRecebedor.complemento || '',
+        cep: formData.enderecoRecebedor.cep
+      };
+
+      const { data, error } = await supabase
+        .from('recebedores_favoritos')
+        .insert(novoFavorito)
+        .select();
+
+      if (error) throw error;
+      
+      toast.success("Recebedor salvo nos favoritos");
+      loadFavoritos();
+    } catch (error) {
+      console.error('Erro ao salvar favorito:', error);
+      toast.error("Erro ao salvar favorito");
+    }
+  };
+
   const generatePDF = () => {
     const doc = new jsPDF();
     const valorExtenso = valorPorExtenso(converterParaNumero(formData.valor));
@@ -380,11 +453,8 @@ const GerarRecibo = () => {
     
     const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
     
-    // Ajustando a logo para ter a mesma altura das 7 linhas de texto à direita
-    // A altura do texto vai de 10 a 45 (7 linhas), então ajustamos a logo para essa altura
     doc.addImage(logoUrl, 'JPEG', 15, 10, 45, 35);
 
-    // Informações à direita do cabeçalho
     doc.setFontSize(8);
     doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 10, { align: "right" });
     doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 15, { align: "right" });
@@ -394,33 +464,25 @@ const GerarRecibo = () => {
     doc.text("Fone: (44) 3276-3569", 195, 40, { align: "right" });
     doc.text("CNPJ: 01.725.957.0001-40", 195, 45, { align: "right" });
 
-    // Número do recibo
     doc.setFontSize(10);
     doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 55, { align: "right" });
 
-    // Título do recibo
     doc.setFontSize(16);
     doc.text("RECIBO DE", 105, 70, { align: "center" });
     
-    // Valor - usando exatamente o mesmo formato que está no formulário
     doc.setFontSize(14);
     doc.text(`R$ ${formData.valor}`, 105, 80, { align: "center" });
 
-    // Conteúdo do recibo
-    doc.setFontSize(12);
     const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
       `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
 
     const linhas = doc.splitTextToSize(texto, 180);
     doc.text(linhas, 15, 100);
 
-    // Data e local
     doc.text(`${formData.cidade} - ${formData.estado}, ${dataCompleta}`, 15, 120);
 
-    // Linha de assinatura
     doc.line(15, 160, 195, 160);
 
-    // Dados do recebedor
     doc.setFontSize(10);
     doc.text(`${formData.recebedor}`, 105, 170, { align: "center" });
     doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 175, { align: "center" });
@@ -526,6 +588,25 @@ const GerarRecibo = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     }
+  };
+
+  const resetToDefaultRecebedor = () => {
+    setFormData(prev => ({
+      ...prev,
+      recebedor: "PROJETO MORIAH MARINGÁ",
+      cpfCnpjRecebedor: "01.725.975/0001-40",
+      enderecoRecebedor: {
+        rua: "Estrada Pitanga",
+        numero: "1266",
+        bairro: "Distrito de Iguatemi",
+        cidade: "Maringá",
+        estado: "PR",
+        complemento: "",
+        cep: "87103-089"
+      }
+    }));
+
+    handleRecebedorEstadoChange("PR");
   };
 
   return (
@@ -707,7 +788,51 @@ const GerarRecibo = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Dados do Recebedor</h3>
+                <div className="flex flex-row justify-between items-center">
+                  <h3 className="text-lg font-semibold">Dados do Recebedor</h3>
+                  <div className="flex space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={resetToDefaultRecebedor}
+                    >
+                      Restaurar Padrão
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleSaveFavorito}
+                    >
+                      <Star className="h-4 w-4 mr-1" /> Salvar
+                    </Button>
+                  </div>
+                </div>
+
+                {favoritos.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Favoritos</Label>
+                    <Select onValueChange={(id) => {
+                      const favorito = favoritos.find(f => f.id === id);
+                      if (favorito) handleFavoritoSelect(favorito);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um recebedor favorito" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {favoritos.map((favorito) => (
+                            <SelectItem key={favorito.id} value={favorito.id}>
+                              {favorito.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="recebedor">Nome do Recebedor</Label>
