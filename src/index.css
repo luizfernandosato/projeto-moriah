@@ -36,6 +36,16 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-tap-highlight-color: transparent; /* Remove highlight ao tocar em elementos no iOS */
+  }
+  
+  /* Ajusta o viewport para dispositivos móveis */
+  @media screen and (max-width: 640px) {
+    html, body {
+      overflow-x: hidden;
+      position: relative;
+      width: 100%;
+    }
   }
 }
 
@@ -51,5 +61,14 @@
 
   .animated-border:hover::after {
     transform: translateX(0);
+  }
+  
+  /* Utilities para melhorar experiência mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
   }
 }

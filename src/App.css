@@ -1,3 +1,12 @@
+
+@media (max-width: 768px) {
+  #root {
+    margin: 0;
+    padding: 1rem;
+    max-width: 100%;
+  }
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +48,15 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Melhorias para dispositivos móveis */
+@media (max-width: 640px) {
+  .card {
+    padding: 1em;
+  }
+  
+  input, select, textarea, button {
+    font-size: 16px !important; /* Evita zoom automático em iOS */
+  }
 }
