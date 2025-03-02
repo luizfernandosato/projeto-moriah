@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      recebedores_favoritos: {
+        Row: {
+          bairro: string
+          cep: string
+          cidade: string
+          complemento: string | null
+          cpf_cnpj: string
+          created_at: string
+          estado: string
+          id: string
+          nome: string
+          numero: string
+          rua: string
+          user_id: string
+        }
+        Insert: {
+          bairro: string
+          cep: string
+          cidade: string
+          complemento?: string | null
+          cpf_cnpj: string
+          created_at?: string
+          estado: string
+          id?: string
+          nome: string
+          numero: string
+          rua: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          cidade?: string
+          complemento?: string | null
+          cpf_cnpj?: string
+          created_at?: string
+          estado?: string
+          id?: string
+          nome?: string
+          numero?: string
+          rua?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recibos: {
         Row: {
           cpf_cnpj: string

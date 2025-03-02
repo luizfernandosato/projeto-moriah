@@ -202,19 +202,21 @@ interface Cidade {
   estado: string;
 }
 
+interface Endereco {
+  rua: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  complemento: string;
+  cep: string;
+}
+
 interface RecebedorFavorito {
   id: string;
   nome: string;
   cpfCnpj: string;
-  endereco: {
-    rua: string;
-    numero: string;
-    bairro: string;
-    cidade: string;
-    estado: string;
-    complemento: string;
-    cep: string;
-  }
+  endereco: Endereco;
 }
 
 const estados: Estado[] = [
@@ -316,7 +318,23 @@ const GerarRecibo = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      setFavoritos(data || []);
+      
+      const favoritosFormatados: RecebedorFavorito[] = (data || []).map(item => ({
+        id: item.id,
+        nome: item.nome,
+        cpfCnpj: item.cpf_cnpj,
+        endereco: {
+          rua: item.rua,
+          numero: item.numero,
+          bairro: item.bairro,
+          cidade: item.cidade,
+          estado: item.estado,
+          complemento: item.complemento || '',
+          cep: item.cep
+        }
+      }));
+      
+      setFavoritos(favoritosFormatados);
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error);
     }
