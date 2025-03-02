@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -863,6 +862,11 @@ const GerarRecibo = () => {
                     placeholder="0,00"
                     required
                   />
+                  {formData.valor && (
+                    <p className="text-sm text-muted-foreground mt-1 italic">
+                      {valorPorExtenso(converterParaNumero(formData.valor))}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
