@@ -600,16 +600,24 @@ const GerarRecibo = () => {
     doc.setFontSize(11);
     const inicioY = 120;
     const coluna1 = 20;
-    const coluna2 = 115;
+    const coluna2 = 65;
 
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal");
     doc.text("RECEBEMOS DE", coluna1, inicioY);
+    
+    doc.setFont("helvetica", "bold");
     doc.text(formData.pagador.toUpperCase() + ",", coluna2, inicioY);
     
+    doc.setFont("helvetica", "normal");
     doc.text("A IMPORTÂNCIA DE", coluna1, inicioY + 20);
+    
+    doc.setFont("helvetica", "bold");
     doc.text(`R$ ${formData.valor}, (${valorExtenso.toUpperCase()}),`, coluna2, inicioY + 20);
     
-    doc.text("REFERENTE A", coluna1, inicioY + 40);
+    doc.setFont("helvetica", "normal");
+    doc.text("REFERENTE A:", coluna1, inicioY + 40);
+    
+    doc.setFont("helvetica", "bold");
     doc.text(formData.descricao.toUpperCase(), coluna2, inicioY + 40);
 
     doc.setFont("helvetica", "italic");
