@@ -574,50 +574,63 @@ const GerarRecibo = () => {
     
     const logoUrl = "/lovable-uploads/c06539a6-198b-4a18-b7f4-6e3fdc4ffd9f.png";
     
-    doc.addImage(logoUrl, 'JPEG', 15, 10, 45, 35);
+    doc.setFillColor(76, 175, 80); // verde
+    doc.rect(0, 0, 10, 297, 'F');
+    
+    doc.addImage(logoUrl, 'PNG', 15, 10, 80, 60);
 
-    doc.setFontSize(8);
-    doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 10, { align: "right" });
-    doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 15, { align: "right" });
-    doc.text("Lei Municipal n° 5089/2020", 195, 20, { align: "right" });
-    doc.text("Estrada Pitanga, 1266 - Dist. Iguatemi", 195, 30, { align: "right" });
-    doc.text("Cep: 87103-089 - Maringá - PR", 195, 35, { align: "right" });
-    doc.text("Fone: (44) 3276-3569", 195, 40, { align: "right" });
-    doc.text("CNPJ: 01.725.957.0001-40", 195, 45, { align: "right" });
-
-    doc.setFontSize(10);
-    doc.text(`Recibo N°: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 55, { align: "right" });
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("RECIBO DE DOAÇÃO", 105, 90, { align: "center" });
 
     doc.setFontSize(16);
-    doc.text("RECIBO DE", 105, 70, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.text(`RECIBO Nº: ${formData.numeroRecibo ? formatarNumeroRecibo(parseInt(formData.numeroRecibo)) : ""}`, 195, 30, { align: "right" });
     
-    doc.setFontSize(14);
-    doc.text(`R$ ${formData.valor}`, 105, 80, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("Lei Federal n° 12.101 De 27/11/2009", 195, 40, { align: "right" });
+    doc.text("Lei Estadual n° 12.816 27/01/2020", 195, 45, { align: "right" });
+    doc.text("Lei Municipal n° 5089/2020", 195, 50, { align: "right" });
+    doc.text("Estrada Pitanga, 1266 - Dist. Iguatemi", 195, 60, { align: "right" });
+    doc.text("Cep: 87103-089 - Maringá - PR", 195, 65, { align: "right" });
+    doc.text("Fone: (44) 3276-3569", 195, 70, { align: "right" });
+    doc.text("CNPJ: 01.725.957.0001-40", 195, 75, { align: "right" });
 
-    const texto = `Recebi de ${formData.pagador}, CPF/CNPJ ${formData.cpfCnpj}, ` +
-      `a importância de ${valorExtenso}, referente a ${formData.descricao}.`;
+    doc.setFontSize(11);
+    const inicioY = 120;
 
-    const linhas = doc.splitTextToSize(texto, 180);
-    doc.text(linhas, 15, 100);
-
-    doc.text(`${formData.enderecoRecebedor.cidade} - ${formData.enderecoRecebedor.estado}, ${dataCompleta}`, 15, 120);
-
-    doc.line(15, 160, 195, 160);
-
-    doc.setFontSize(10);
-    doc.text(`${formData.recebedor}`, 105, 170, { align: "center" });
-    doc.text(`CPF/CNPJ: ${formData.cpfCnpjRecebedor}`, 105, 175, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.text("RECEBEMOS DE", 20, inicioY);
+    doc.text("A IMPORTÂNCIA DE", 20, inicioY + 20);
+    doc.text("REFERENTE A", 20, inicioY + 40);
     
-    const enderecoRecebedor = [
-      `${formData.enderecoRecebedor.rua}, ${formData.enderecoRecebedor.numero}`,
-      `${formData.enderecoRecebedor.bairro}${formData.enderecoRecebedor.complemento ? ` - ${formData.enderecoRecebedor.complemento}` : ''}`,
-      `${formData.enderecoRecebedor.cidade} - ${formData.enderecoRecebedor.estado}`,
-      `CEP: ${formData.enderecoRecebedor.cep}`
-    ];
+    doc.setFont("helvetica", "bold");
+    doc.text(formData.pagador.toUpperCase() + ",", 150, inicioY, { align: "left", maxWidth: 150 });
     
-    enderecoRecebedor.forEach((linha, index) => {
-      doc.text(linha, 105, 180 + (index * 5), { align: "center" });
+    doc.text(`R$ ${formData.valor}, (${valorExtenso.toUpperCase()}),`, 150, inicioY + 20, { 
+      align: "left", 
+      maxWidth: 150 
     });
+    
+    doc.text(formData.descricao.toUpperCase(), 150, inicioY + 40, { 
+      align: "left", 
+      maxWidth: 150 
+    });
+
+    doc.setFont("helvetica", "italic");
+    doc.text("e para clareza firmo(amos) o presente", 20, inicioY + 60);
+    
+    doc.setLineWidth(0.5);
+    doc.line(105, inicioY + 95, 190, inicioY + 95);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`${formData.recebedor} | ${formData.cpfCnpjRecebedor}`, 190, inicioY + 105, { align: "right" });
+    doc.text(`${formData.enderecoRecebedor.cidade}/${formData.enderecoRecebedor.estado} | ${dataCompleta}`, 190, inicioY + 112, { align: "right" });
+    
+    doc.setFontSize(9);
+    doc.text(`Endereço: ${formData.enderecoRecebedor.rua.toUpperCase()}`, 190, inicioY + 122, { align: "right" });
+    doc.text(`${formData.enderecoRecebedor.cep}, ${formData.enderecoRecebedor.cidade.toUpperCase()}/${formData.enderecoRecebedor.estado}, ${formData.enderecoRecebedor.bairro.toUpperCase()}`, 190, inicioY + 129, { align: "right" });
 
     return doc;
   };
