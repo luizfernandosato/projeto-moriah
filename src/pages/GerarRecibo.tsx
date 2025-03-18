@@ -577,7 +577,7 @@ const GerarRecibo = () => {
     doc.setFillColor(76, 175, 80); // verde
     doc.rect(0, 0, 10, 297, 'F');
     
-    doc.addImage(logoUrl, 'PNG', 15, 10, 80, 60);
+    doc.addImage(logoUrl, 'PNG', 15, 10, 60, 45);
 
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
@@ -599,24 +599,18 @@ const GerarRecibo = () => {
 
     doc.setFontSize(11);
     const inicioY = 120;
+    const coluna1 = 20;
+    const coluna2 = 115;
 
     doc.setFont("helvetica", "bold");
-    doc.text("RECEBEMOS DE", 20, inicioY);
-    doc.text("A IMPORTÂNCIA DE", 20, inicioY + 20);
-    doc.text("REFERENTE A", 20, inicioY + 40);
+    doc.text("RECEBEMOS DE", coluna1, inicioY);
+    doc.text(formData.pagador.toUpperCase() + ",", coluna2, inicioY);
     
-    doc.setFont("helvetica", "bold");
-    doc.text(formData.pagador.toUpperCase() + ",", 150, inicioY, { align: "left", maxWidth: 150 });
+    doc.text("A IMPORTÂNCIA DE", coluna1, inicioY + 20);
+    doc.text(`R$ ${formData.valor}, (${valorExtenso.toUpperCase()}),`, coluna2, inicioY + 20);
     
-    doc.text(`R$ ${formData.valor}, (${valorExtenso.toUpperCase()}),`, 150, inicioY + 20, { 
-      align: "left", 
-      maxWidth: 150 
-    });
-    
-    doc.text(formData.descricao.toUpperCase(), 150, inicioY + 40, { 
-      align: "left", 
-      maxWidth: 150 
-    });
+    doc.text("REFERENTE A", coluna1, inicioY + 40);
+    doc.text(formData.descricao.toUpperCase(), coluna2, inicioY + 40);
 
     doc.setFont("helvetica", "italic");
     doc.text("e para clareza firmo(amos) o presente", 20, inicioY + 60);
