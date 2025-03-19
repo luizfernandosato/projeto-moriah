@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { Download, Printer, Star } from "lucide-react";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const valorPorExtenso = (valor: number): string => {
   if (valor === 0) return "Zero reais";
@@ -360,13 +361,7 @@ const GerarRecibo = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'valor') {
-      const numeroFormatado = formatarNumero(value);
-      setFormData(prev => ({
-        ...prev,
-        [name]: numeroFormatado
-      }));
-    } else if (name.startsWith('enderecoRecebedor.')) {
+    if (name.startsWith('enderecoRecebedor.')) {
       const campo = name.split('.')[1];
       setFormData(prev => ({
         ...prev,
@@ -381,6 +376,13 @@ const GerarRecibo = () => {
         [name]: value
       }));
     }
+  };
+
+  const handleValorChange = (valor: string) => {
+    setFormData(prev => ({
+      ...prev,
+      valor: valor
+    }));
   };
 
   const handleEstadoChange = async (estado: string) => {
@@ -849,20 +851,12 @@ const GerarRecibo = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="valor">Valor</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                      R$
-                    </span>
-                    <Input
-                      id="valor"
-                      name="valor"
-                      value={formData.valor}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      placeholder="0,00"
-                      inputMode="text"
-                    />
-                  </div>
+                  <MoneyInput
+                    id="valor"
+                    value={formData.valor}
+                    onChange={handleValorChange}
+                    placeholder="0,00"
+                  />
                   {formData.valor && (
                     <p className="text-sm text-muted-foreground mt-1 italic first-letter:uppercase">
                       {valorPorExtenso(converterParaNumero(formData.valor))}
