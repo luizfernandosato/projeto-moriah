@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
@@ -23,21 +22,26 @@ export function MoneyInput({
 
   // Format the value for display
   const formatarValor = (valor: string): string => {
-    // Remove tudo exceto dígitos e vírgula
+    // Remove everything except digits and comma
     let apenasDigitos = valor.replace(/[^\d,]/g, '');
     
-    // Se estiver vazio, retorna vazio
+    // If empty, return empty string
     if (!apenasDigitos) return '';
     
-    // Separa em parte inteira e decimal
+    // Split into integer and decimal parts
     const partes = apenasDigitos.split(',');
     let parteInteira = partes[0] || '';
-    let parteDecimal = partes.length > 1 ? partes[1] : '';
+    let parteDecimal = partes.length > 1 ? partes[1].substring(0, 2) : '';
     
-    // Remove zeros à esquerda da parte inteira (exceto se for só zero)
+    // If decimal part exists but is less than 2 digits, pad with zeros
+    if (partes.length > 1 && parteDecimal.length < 2) {
+      parteDecimal = parteDecimal.padEnd(2, '0');
+    }
+    
+    // Remove leading zeros from integer part (except if it's just zero)
     parteInteira = parteInteira === '' ? '0' : parteInteira.replace(/^0+(?=\d)/, '');
     
-    // Formata a parte inteira com pontos
+    // Format integer part with dots
     let formattedInteger = '';
     for (let i = 0; i < parteInteira.length; i++) {
       if (i > 0 && (parteInteira.length - i) % 3 === 0) {
@@ -46,7 +50,7 @@ export function MoneyInput({
       formattedInteger += parteInteira[i];
     }
     
-    // Retorna o valor formatado
+    // Return formatted value
     if (partes.length > 1) {
       return `${formattedInteger},${parteDecimal}`;
     } else {
@@ -56,7 +60,7 @@ export function MoneyInput({
 
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Salva a posição do cursor antes da formatação
+    // Save cursor position before formatting
     if (inputRef.current) {
       cursorPosition.current = inputRef.current.selectionStart;
     }
@@ -65,32 +69,29 @@ export function MoneyInput({
     const formatted = formatarValor(rawValue);
     setDisplayValue(formatted);
     
-    // Para o valor que vai para o estado do componente pai, 
-    // mantemos apenas dígitos e vírgula
-    const valueForState = formatted;
-    onChange(valueForState);
+    // For the value that goes to the parent component state,
+    // we keep it formatted
+    onChange(formatted);
   };
 
-  // Atualiza o display value quando o valor externo muda
+  // Update display value when external value changes
   useEffect(() => {
-    setDisplayValue(formatarValor(value));
+    const formattedValue = formatarValor(value);
+    setDisplayValue(formattedValue);
   }, [value]);
 
-  // Restaura a posição do cursor após renderização
+  // Restore cursor position after rendering
   useEffect(() => {
     if (inputRef.current && cursorPosition.current !== null) {
-      // Ajusta a posição do cursor para compensar a formatação
+      // Adjust cursor position to compensate for formatting
       let adjustedPosition = cursorPosition.current;
-      const prevValueLength = displayValue.length;
-      const currentValueLength = inputRef.current.value.length;
       
-      // Se o comprimento mudou devido à formatação, ajusta a posição
-      if (prevValueLength !== currentValueLength) {
-        const diff = currentValueLength - prevValueLength;
-        adjustedPosition = Math.min(adjustedPosition + diff, currentValueLength);
+      try {
+        inputRef.current.setSelectionRange(adjustedPosition, adjustedPosition);
+      } catch (e) {
+        console.error("Error setting selection range:", e);
       }
       
-      inputRef.current.setSelectionRange(adjustedPosition, adjustedPosition);
       cursorPosition.current = null;
     }
   }, [displayValue]);
