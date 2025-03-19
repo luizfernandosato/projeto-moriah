@@ -122,11 +122,11 @@ const formatarNumero = (valor: string) => {
   
   if (!apenasDigitosEVirgula.match(/\d/)) return '';
   
-  let [parteInteira, parteDecimal] = apenasDigitosEVirgula.split(',');
+  const partes = apenasDigitosEVirgula.split(',');
+  let parteInteira = partes[0] || '0';
+  let parteDecimal = partes.length > 1 ? partes[1] : '00';
   
-  if (!parteInteira) parteInteira = '0';
-  
-  parteInteira = parteInteira.replace(/^0+(?!\b)/, '');
+  parteInteira = parteInteira === '0' ? '0' : parteInteira.replace(/^0+/, '');
   
   let parteInteiraFormatada = '';
   for (let i = 0; i < parteInteira.length; i++) {
@@ -1143,3 +1143,4 @@ const GerarRecibo = () => {
 };
 
 export default GerarRecibo;
+
