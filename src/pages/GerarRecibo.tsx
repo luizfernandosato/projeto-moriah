@@ -118,44 +118,32 @@ const valorPorExtenso = (valor: number): string => {
 const formatarNumero = (valor: string) => {
   if (!valor) return '';
   
-  try {
-    let valorLimpo = valor.replace(/[^\d,]/g, '');
-    
-    if (!valorLimpo.match(/\d/)) return '';
-    
-    let valorSemPontos = valorLimpo.replace(/\./g, '');
-    
-    const partes = valorSemPontos.split(',');
-    if (partes.length > 2) {
-      valorSemPontos = partes[0] + ',' + partes[1];
+  const apenasDigitosEVirgula = valor.replace(/[^\d,]/g, '');
+  
+  if (!apenasDigitosEVirgula.match(/\d/)) return '';
+  
+  let [parteInteira, parteDecimal] = apenasDigitosEVirgula.split(',');
+  
+  if (!parteInteira) parteInteira = '0';
+  
+  parteInteira = parteInteira.replace(/^0+(?!\b)/, '');
+  
+  let parteInteiraFormatada = '';
+  for (let i = 0; i < parteInteira.length; i++) {
+    if (i > 0 && (parteInteira.length - i) % 3 === 0) {
+      parteInteiraFormatada += '.';
     }
-    
-    let [parteInteira, parteDecimal] = valorSemPontos.split(',');
-    
-    if (!parteInteira) parteInteira = '0';
-    
-    parteInteira = parteInteira.replace(/^0+(?=\d)/, '');
-    
-    let parteInteiraFormatada = '';
-    for (let i = 0; i < parteInteira.length; i++) {
-      if (i > 0 && (parteInteira.length - i) % 3 === 0) {
-        parteInteiraFormatada += '.';
-      }
-      parteInteiraFormatada += parteInteira[i];
+    parteInteiraFormatada += parteInteira[i];
+  }
+  
+  if (parteDecimal !== undefined) {
+    parteDecimal = parteDecimal.slice(0, 2);
+    if (parteDecimal.length < 2) {
+      parteDecimal = parteDecimal.padEnd(2, '0');
     }
-    
-    if (parteDecimal !== undefined) {
-      parteDecimal = parteDecimal.slice(0, 2);
-      if (parteDecimal.length < 2) {
-        parteDecimal = parteDecimal.padEnd(2, '0');
-      }
-      return `${parteInteiraFormatada},${parteDecimal}`;
-    } else {
-      return `${parteInteiraFormatada},00`;
-    }
-  } catch (error) {
-    console.error("Erro ao formatar número:", error);
-    return valor;
+    return `${parteInteiraFormatada},${parteDecimal}`;
+  } else {
+    return `${parteInteiraFormatada},00`;
   }
 };
 
@@ -381,15 +369,11 @@ const GerarRecibo = () => {
     const { name, value } = e.target;
     
     if (name === 'valor') {
-      try {
-        const numeroFormatado = formatarNumero(value);
-        setFormData(prev => ({
-          ...prev,
-          [name]: numeroFormatado
-        }));
-      } catch (error) {
-        console.error("Erro ao processar valor:", error);
-      }
+      const numeroFormatado = formatarNumero(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numeroFormatado
+      }));
     } else if (name.startsWith('enderecoRecebedor.')) {
       const campo = name.split('.')[1];
       setFormData(prev => ({
@@ -884,7 +868,7 @@ const GerarRecibo = () => {
                       onChange={handleInputChange}
                       className="pl-10"
                       placeholder="0,00"
-                      inputMode="decimal"
+                      inputMode="numeric"
                       required
                     />
                   </div>
