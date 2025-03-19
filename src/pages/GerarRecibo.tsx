@@ -116,15 +116,13 @@ const valorPorExtenso = (valor: number): string => {
 };
 
 const formatarNumero = (valor: string) => {
-  if (!valor) return '';
-  
   const apenasDigitosEVirgula = valor.replace(/[^\d,]/g, '');
   
-  if (!apenasDigitosEVirgula.match(/\d/)) return '';
+  if (!apenasDigitosEVirgula || !apenasDigitosEVirgula.match(/\d/)) return '';
   
   const partes = apenasDigitosEVirgula.split(',');
   let parteInteira = partes[0] || '0';
-  let parteDecimal = partes.length > 1 ? partes[1] : '00';
+  const parteDecimal = partes.length > 1 ? partes[1].slice(0, 2) : '00';
   
   parteInteira = parteInteira === '0' ? '0' : parteInteira.replace(/^0+/, '');
   
@@ -136,15 +134,9 @@ const formatarNumero = (valor: string) => {
     parteInteiraFormatada += parteInteira[i];
   }
   
-  if (parteDecimal !== undefined) {
-    parteDecimal = parteDecimal.slice(0, 2);
-    if (parteDecimal.length < 2) {
-      parteDecimal = parteDecimal.padEnd(2, '0');
-    }
-    return `${parteInteiraFormatada},${parteDecimal}`;
-  } else {
-    return `${parteInteiraFormatada},00`;
-  }
+  const centavosFormatados = parteDecimal.padEnd(2, '0');
+  
+  return `${parteInteiraFormatada},${centavosFormatados}`;
 };
 
 const converterParaNumero = (valorFormatado: string): number => {
@@ -868,8 +860,7 @@ const GerarRecibo = () => {
                       onChange={handleInputChange}
                       className="pl-10"
                       placeholder="0,00"
-                      inputMode="numeric"
-                      required
+                      inputMode="text"
                     />
                   </div>
                   {formData.valor && (
@@ -1143,4 +1134,3 @@ const GerarRecibo = () => {
 };
 
 export default GerarRecibo;
-
