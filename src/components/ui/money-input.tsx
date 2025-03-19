@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,8 @@ export function MoneyInput({
     if (partes.length > 1) {
       return `${formattedInteger},${parteDecimal}`;
     } else {
-      return formattedInteger;
+      // Always add decimal part if none exists
+      return `${formattedInteger},00`;
     }
   };
 
@@ -104,7 +106,7 @@ export function MoneyInput({
       <Input
         ref={inputRef}
         type="text"
-        inputMode="text"
+        inputMode="decimal"
         className={cn("pl-10", className)}
         placeholder={placeholder}
         value={displayValue}
