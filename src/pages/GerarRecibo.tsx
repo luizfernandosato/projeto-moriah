@@ -119,7 +119,7 @@ const formatarNumero = (valor: string) => {
   if (!valor) return '';
   
   try {
-    let valorLimpo = valor.replace(/[^\d,.]/g, '');
+    let valorLimpo = valor.replace(/[^\d,]/g, '');
     
     if (!valorLimpo.match(/\d/)) return '';
     
@@ -127,10 +127,14 @@ const formatarNumero = (valor: string) => {
     
     const partes = valorSemPontos.split(',');
     if (partes.length > 2) {
-      valorSemPontos = partes[0] + ',' + partes.slice(1).join('');
+      valorSemPontos = partes[0] + ',' + partes[1];
     }
     
-    const [parteInteira, parteDecimal] = valorSemPontos.split(',');
+    let [parteInteira, parteDecimal] = valorSemPontos.split(',');
+    
+    if (!parteInteira) parteInteira = '0';
+    
+    parteInteira = parteInteira.replace(/^0+(?=\d)/, '');
     
     let parteInteiraFormatada = '';
     for (let i = 0; i < parteInteira.length; i++) {
@@ -140,12 +144,14 @@ const formatarNumero = (valor: string) => {
       parteInteiraFormatada += parteInteira[i];
     }
     
-    if (parteDecimal) {
-      return `${parteInteiraFormatada},${parteDecimal.slice(0, 2).padEnd(2, '0')}`;
-    } else if (valorSemPontos.includes(',')) {
-      return `${parteInteiraFormatada},00`;
+    if (parteDecimal !== undefined) {
+      parteDecimal = parteDecimal.slice(0, 2);
+      if (parteDecimal.length < 2) {
+        parteDecimal = parteDecimal.padEnd(2, '0');
+      }
+      return `${parteInteiraFormatada},${parteDecimal}`;
     } else {
-      return parteInteiraFormatada;
+      return `${parteInteiraFormatada},00`;
     }
   } catch (error) {
     console.error("Erro ao formatar número:", error);
@@ -867,16 +873,23 @@ const GerarRecibo = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="valor">Valor</Label>
-                  <Input
-                    id="valor"
-                    name="valor"
-                    value={formData.valor}
-                    onChange={handleInputChange}
-                    placeholder="0,00"
-                    required
-                  />
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                      R$
+                    </span>
+                    <Input
+                      id="valor"
+                      name="valor"
+                      value={formData.valor}
+                      onChange={handleInputChange}
+                      className="pl-10"
+                      placeholder="0,00"
+                      inputMode="decimal"
+                      required
+                    />
+                  </div>
                   {formData.valor && (
-                    <p className="text-sm text-muted-foreground mt-1 italic">
+                    <p className="text-sm text-muted-foreground mt-1 italic first-letter:uppercase">
                       {valorPorExtenso(converterParaNumero(formData.valor))}
                     </p>
                   )}
