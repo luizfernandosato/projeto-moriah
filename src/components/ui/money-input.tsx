@@ -20,76 +20,97 @@ export function MoneyInput({
   const [displayValue, setDisplayValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorPosition = useRef<number | null>(null);
+  const previousFormattedLength = useRef<number>(0);
 
-  // Format the value for display
-  const formatarValor = (valor: string): string => {
-    // Remove everything except digits and comma
-    let apenasDigitos = valor.replace(/[^\d,]/g, '');
+  // Format value for display
+  const formatValue = (rawValue: string): string => {
+    // Remove anything that's not a digit or comma
+    const cleanValue = rawValue.replace(/[^\d,]/g, '');
     
     // If empty, return empty string
-    if (!apenasDigitos) return '';
+    if (!cleanValue) return '';
     
     // Split into integer and decimal parts
-    const partes = apenasDigitos.split(',');
-    let parteInteira = partes[0] || '';
-    let parteDecimal = partes.length > 1 ? partes[1].substring(0, 2) : '';
-    
-    // If decimal part exists but is less than 2 digits, pad with zeros
-    if (partes.length > 1 && parteDecimal.length < 2) {
-      parteDecimal = parteDecimal.padEnd(2, '0');
-    }
+    const parts = cleanValue.split(',');
+    let integerPart = parts[0] || '';
+    let decimalPart = parts.length > 1 ? parts[1].substring(0, 2) : '';
     
     // Remove leading zeros from integer part (except if it's just zero)
-    parteInteira = parteInteira === '' ? '0' : parteInteira.replace(/^0+(?=\d)/, '');
+    integerPart = integerPart === '' ? '0' : integerPart.replace(/^0+(?=\d)/, '');
     
-    // Format integer part with dots
+    // Format integer part with dots for thousand separators
     let formattedInteger = '';
-    for (let i = 0; i < parteInteira.length; i++) {
-      if (i > 0 && (parteInteira.length - i) % 3 === 0) {
+    for (let i = 0; i < integerPart.length; i++) {
+      if (i > 0 && (integerPart.length - i) % 3 === 0) {
         formattedInteger += '.';
       }
-      formattedInteger += parteInteira[i];
+      formattedInteger += integerPart[i];
     }
     
-    // Return formatted value
-    if (partes.length > 1) {
-      return `${formattedInteger},${parteDecimal}`;
+    // For display, always show two decimal places
+    if (parts.length > 1) {
+      return `${formattedInteger},${decimalPart.padEnd(2, '0')}`;
     } else {
-      // Always add decimal part if none exists
       return `${formattedInteger},00`;
     }
   };
 
-  // Handle input change
+  // Calculate cursor position after formatting
+  const calculateCursorPosition = (
+    oldValue: string, 
+    newValue: string, 
+    currentCursorPosition: number
+  ): number => {
+    if (!oldValue || !newValue) return newValue.length;
+
+    const oldDotCountBeforeCursor = (oldValue.substring(0, currentCursorPosition).match(/\./g) || []).length;
+    const newDotCountBeforeCursor = (newValue.substring(0, currentCursorPosition).match(/\./g) || []).length;
+    const dotDifference = newDotCountBeforeCursor - oldDotCountBeforeCursor;
+
+    return currentCursorPosition + dotDifference;
+  };
+
+  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!inputRef.current) return;
+    
     // Save cursor position before formatting
-    if (inputRef.current) {
-      cursorPosition.current = inputRef.current.selectionStart;
+    const currentCursorPosition = inputRef.current.selectionStart || 0;
+    const oldFormattedValue = displayValue;
+    
+    // Get raw input and format it
+    const rawValue = e.target.value;
+    const formatted = formatValue(rawValue);
+    
+    // Calculate new cursor position
+    if (formatted !== oldFormattedValue) {
+      cursorPosition.current = calculateCursorPosition(
+        oldFormattedValue,
+        formatted,
+        currentCursorPosition
+      );
+      previousFormattedLength.current = formatted.length;
     }
     
-    const rawValue = e.target.value;
-    const formatted = formatarValor(rawValue);
     setDisplayValue(formatted);
-    
-    // For the value that goes to the parent component state,
-    // we keep it formatted
     onChange(formatted);
   };
 
   // Update display value when external value changes
   useEffect(() => {
-    const formattedValue = formatarValor(value);
-    setDisplayValue(formattedValue);
+    const formattedValue = formatValue(value);
+    if (formattedValue !== displayValue) {
+      setDisplayValue(formattedValue);
+    }
   }, [value]);
 
   // Restore cursor position after rendering
   useEffect(() => {
     if (inputRef.current && cursorPosition.current !== null) {
-      // Adjust cursor position to compensate for formatting
-      let adjustedPosition = cursorPosition.current;
+      const pos = Math.min(cursorPosition.current, displayValue.length);
       
       try {
-        inputRef.current.setSelectionRange(adjustedPosition, adjustedPosition);
+        inputRef.current.setSelectionRange(pos, pos);
       } catch (e) {
         console.error("Error setting selection range:", e);
       }
