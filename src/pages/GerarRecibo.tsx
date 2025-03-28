@@ -538,8 +538,8 @@ const GerarRecibo = () => {
         return;
       }
 
-      if (!formData.pagador || !formData.cpfCnpj) {
-        toast.error("Nome e CPF/CNPJ do pagador são obrigatórios");
+      if (!formData.pagador) {
+        toast.error("Nome do pagador é obrigatório");
         return;
       }
 
@@ -860,7 +860,7 @@ const GerarRecibo = () => {
                       name="cpfCnpj"
                       value={formData.cpfCnpj}
                       onChange={handleInputChange}
-                      required
+                      // Removed the required attribute here
                     />
                   </div>
                 </div>
